@@ -94,21 +94,21 @@ public struct AKVideoGestureOverlay: View {
                 // Left Ripple (-10s Seek Indicator)
                 if activeRippleDirection == .backward {
                     HStack {
-                        VStack(spacing: 8) {
+                        VStack(spacing: AKSpacing.xs) {
                             Image(systemName: "gobackward.10")
                                 .font(.system(size: 38, weight: .bold))
                             Text("10 seconds")
                                 .font(typography.badge)
                         }
                         .foregroundColor(.white)
-                        .padding(24)
+                        .padding(AKSpacing.xl)
                         .background(Circle().fill(Color.black.opacity(0.55)))
                         .opacity(rippleOpacity)
                         .scaleEffect(rippleOpacity > 0 ? 1.0 : 0.8)
 
                         Spacer()
                     }
-                    .padding(.leading, 36)
+                    .padding(.leading, AKSpacing.xxl)
                 }
 
                 // Right Ripple (+15s Seek Indicator)
@@ -116,26 +116,26 @@ public struct AKVideoGestureOverlay: View {
                     HStack {
                         Spacer()
 
-                        VStack(spacing: 8) {
+                        VStack(spacing: AKSpacing.xs) {
                             Image(systemName: "goforward.15")
                                 .font(.system(size: 38, weight: .bold))
                             Text("15 seconds")
                                 .font(typography.badge)
                         }
                         .foregroundColor(.white)
-                        .padding(24)
+                        .padding(AKSpacing.xl)
                         .background(Circle().fill(Color.black.opacity(0.55)))
                         .opacity(rippleOpacity)
                         .scaleEffect(rippleOpacity > 0 ? 1.0 : 0.8)
                     }
-                    .padding(.trailing, 36)
+                    .padding(.trailing, AKSpacing.xxl)
                 }
 
                 // Vertical Floating HUDs
                 if isShowingBrightnessHUD {
                     HStack {
                         AKBrightnessSlider(brightness: currentBrightness, isCompact: true, typography: typography)
-                            .padding(.leading, 24)
+                            .padding(.leading, AKSpacing.xl)
                         Spacer()
                     }
                     .transition(.opacity)
@@ -145,7 +145,7 @@ public struct AKVideoGestureOverlay: View {
                     HStack {
                         Spacer()
                         AKVolumeSlider(volume: currentVolume, isCompact: true, typography: typography)
-                            .padding(.trailing, 24)
+                            .padding(.trailing, AKSpacing.xl)
                     }
                     .transition(.opacity)
                 }

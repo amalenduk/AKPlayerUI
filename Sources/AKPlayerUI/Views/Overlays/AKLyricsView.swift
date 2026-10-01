@@ -49,17 +49,17 @@ public struct AKLyricsView: View {
             Color.black.opacity(0.85).ignoresSafeArea()
             Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: AKSpacing.zero) {
                 // Header
                 headerBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 20)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.lg)
 
                 // Scrollable Synced Lyrics
                 ScrollViewReader { proxy in
                     ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(alignment: .leading, spacing: 28) {
-                            Color.clear.frame(height: 40)
+                        LazyVStack(alignment: .leading, spacing: AKSpacing.xxl) {
+                            Color.clear.frame(height: AKSpacing.xxxl)
 
                             ForEach(Array(lyrics.enumerated()), id: \.element.id) { index, line in
                                 let isActive = index == (activeIndex ?? 0)
@@ -81,7 +81,7 @@ public struct AKLyricsView: View {
 
                             Color.clear.frame(height: 120)
                         }
-                        .padding(.horizontal, 28)
+                        .padding(.horizontal, AKSpacing.xl)
                     }
                     .onChange(of: activeIndex) { _, newIndex in
                         if let newIndex = newIndex, newIndex < lyrics.count {
@@ -97,7 +97,7 @@ public struct AKLyricsView: View {
 
     private var headerBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
                 Text("LYRICS")
                     .font(typography.badgeSmall)
                     .foregroundColor(palette.accent)

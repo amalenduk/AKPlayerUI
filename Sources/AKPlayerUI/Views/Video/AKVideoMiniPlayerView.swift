@@ -28,23 +28,23 @@ public struct AKVideoMiniPlayerView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
+        VStack(spacing: AKSpacing.zero) {
+            HStack(spacing: AKSpacing.sm) {
                 // Miniature Video Surface
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: AKSpacing.xs)
                         .fill(Color.black)
 
                     AKVideoSurfaceView(
                         player: coordinator.player,
                         aspectRatio: .fill
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: AKSpacing.xs))
                 }
                 .frame(width: 68, height: 42)
 
                 // Title & Subtitle Info (Tapping expands into fullscreen)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                     Text(coordinator.currentTitle.isEmpty ? "Media Title" : coordinator.currentTitle)
                         .font(typography.subheadline.weight(.semibold))
                         .foregroundColor(.white)
@@ -85,8 +85,8 @@ public struct AKVideoMiniPlayerView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.vertical, AKSpacing.xs)
 
             // Bottom Progress Line
             GeometryReader { geo in
@@ -111,7 +111,7 @@ public struct AKVideoMiniPlayerView: View {
                 )
                 .shadow(color: Color.black.opacity(0.35), radius: 10, x: 0, y: 4)
         )
-        .padding(.horizontal, 12)
+        .padding(.horizontal, AKSpacing.sm)
     }
 }
 
@@ -120,6 +120,6 @@ public struct AKVideoMiniPlayerView: View {
     ZStack(alignment: .bottom) {
         Color.gray.opacity(0.3).ignoresSafeArea()
         AKVideoMiniPlayerView(coordinator: .previewMock)
-            .padding(.bottom, 20)
+            .padding(.bottom, AKSpacing.lg)
     }
 }

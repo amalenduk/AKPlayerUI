@@ -33,7 +33,7 @@ public struct AKBrightnessSlider: View {
     }
 
     public var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AKSpacing.xs) {
             Image(systemName: brightnessIcon)
                 .font(.system(size: isCompact ? 14 : 18, weight: .semibold))
                 .foregroundColor(.yellow)
@@ -57,8 +57,8 @@ public struct AKBrightnessSlider: View {
                 .font(typography.badgeSmall)
                 .foregroundColor(.white.opacity(0.8))
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, isCompact ? 8 : 12)
+        .padding(.vertical, AKSpacing.sm)
+        .padding(.horizontal, isCompact ? AKSpacing.xs : AKSpacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.black.opacity(0.65))
@@ -74,7 +74,7 @@ public struct AKBrightnessSlider: View {
 #Preview("Brightness Slider") {
     ZStack {
         Color.black.ignoresSafeArea()
-        HStack(spacing: 30) {
+        HStack(spacing: AKSpacing.xxl) {
             AKBrightnessSlider(brightness: 0.2)
             AKBrightnessSlider(brightness: 0.6)
             AKBrightnessSlider(brightness: 1.0)

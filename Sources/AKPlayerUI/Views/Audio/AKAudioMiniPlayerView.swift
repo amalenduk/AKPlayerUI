@@ -27,7 +27,7 @@ public struct AKAudioMiniPlayerView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: AKSpacing.zero) {
             // Top Hairline Progress Bar
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
@@ -44,27 +44,27 @@ public struct AKAudioMiniPlayerView: View {
             .frame(height: 2.5)
 
             // Main Bar Content
-            HStack(spacing: 12) {
+            HStack(spacing: AKSpacing.sm) {
                 // Artwork Thumbnail
                 thumbnailView
 
                 // Track Title & Artist
                 trackInfoView
 
-                Spacer(minLength: 8)
+                Spacer(minLength: AKSpacing.xs)
 
                 // Compact Transport Buttons
                 transportButtons
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.vertical, AKSpacing.xs)
         }
         .frame(height: 64)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: AKSpacing.md, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: AKSpacing.md, style: .continuous)
                         .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
                 .shadow(color: Color.black.opacity(0.35), radius: 16, x: 0, y: 6)
@@ -101,13 +101,13 @@ public struct AKAudioMiniPlayerView: View {
     }
 
     private var trackInfoView: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
             Text(coordinator.currentTitle)
                 .font(theme.typography.subheadline.weight(.semibold))
                 .foregroundColor(theme.palette.foregroundPrimary)
                 .lineLimit(1)
 
-            HStack(spacing: 6) {
+            HStack(spacing: AKSpacing.xxs) {
                 if coordinator.isPlaying {
                     Image(systemName: "waveform")
                         .font(theme.typography.caption2)
@@ -123,7 +123,7 @@ public struct AKAudioMiniPlayerView: View {
     }
 
     private var transportButtons: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AKSpacing.sm) {
             // Play / Pause Button
             Button(action: { coordinator.togglePlayPause() }) {
                 ZStack {
@@ -163,8 +163,8 @@ public struct AKAudioMiniPlayerView: View {
     VStack {
         Spacer()
         AKAudioMiniPlayerView(coordinator: .previewAudioMock)
-            .padding(.horizontal, 16)
-            .padding(.bottom, 20)
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.bottom, AKSpacing.lg)
     }
     .background(Color.black.ignoresSafeArea())
     .preferredColorScheme(.dark)

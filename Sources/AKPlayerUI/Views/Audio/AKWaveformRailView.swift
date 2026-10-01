@@ -42,13 +42,13 @@ public struct AKWaveformRailView: View {
             let w = geo.size.width
             let h = geo.size.height
 
-            HStack(spacing: 3) {
+            HStack(spacing: AKSpacing.xxxs) {
                 ForEach(0..<barCount, id: \.self) { index in
                     let barProgress = Double(index) / Double(barCount)
                     let isPlayed = barProgress <= progress
                     let baseHeight = sampleHeight(for: index)
 
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: AKSpacing.xxxs)
                         .fill(isPlayed ? accentColor : Color.white.opacity(0.2))
                         .frame(width: max(2, (w - CGFloat(barCount * 3)) / CGFloat(barCount)))
                         .frame(height: max(4, h * baseHeight))
@@ -65,7 +65,7 @@ public struct AKWaveformRailView: View {
                     }
             )
         }
-        .frame(height: 48)
+        .frame(height: AKSpacing.huge)
     }
 
     private func sampleHeight(for index: Int) -> CGFloat {
@@ -84,6 +84,6 @@ public struct AKWaveformRailView: View {
             duration: 210,
             isPlaying: true
         )
-        .padding()
+        .padding(AKSpacing.md)
     }
 }

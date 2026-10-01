@@ -31,17 +31,17 @@ public struct AKTrackSelectorSheet: View {
             Color.black.opacity(0.85).ignoresSafeArea()
             Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: AKSpacing.zero) {
                 // Header
                 headerBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 20)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.lg)
 
                 // Segmented Tab Picker (Audio vs Subtitles)
                 pickerTabs
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.md)
+                    .padding(.bottom, AKSpacing.sm)
 
                 // Track List
                 if selectedTab == 0 {
@@ -57,7 +57,7 @@ public struct AKTrackSelectorSheet: View {
 
     private var headerBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
                 Text("AUDIO & SUBTITLES")
                     .font(typography.badgeSmall)
                     .foregroundColor(palette.accent)
@@ -84,13 +84,13 @@ public struct AKTrackSelectorSheet: View {
     }
 
     private var pickerTabs: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: AKSpacing.zero) {
             Button(action: { withAnimation { selectedTab = 0 } }) {
                 Text("Audio Tracks")
                     .font(typography.button)
                     .foregroundColor(selectedTab == 0 ? palette.foregroundPrimary : palette.foregroundTertiary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, AKSpacing.xs)
                     .background(selectedTab == 0 ? Color.white.opacity(0.12) : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
@@ -101,20 +101,20 @@ public struct AKTrackSelectorSheet: View {
                     .font(typography.button)
                     .foregroundColor(selectedTab == 1 ? palette.foregroundPrimary : palette.foregroundTertiary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, AKSpacing.xs)
                     .background(selectedTab == 1 ? Color.white.opacity(0.12) : Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
             .buttonStyle(.plain)
         }
-        .padding(4)
+        .padding(AKSpacing.xxs)
         .background(Color.white.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
     private var audioTrackList: some View {
         ScrollView(.vertical, showsIndicators: true) {
-            LazyVStack(spacing: 8) {
+            LazyVStack(spacing: AKSpacing.xs) {
                 if coordinator.availableAudioTracks.isEmpty {
                     emptyState(title: "No Extra Audio Tracks", subtitle: "Only the default stereo/surround mix is available.")
                 } else {
@@ -126,15 +126,15 @@ public struct AKTrackSelectorSheet: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 32)
+            .padding(.horizontal, AKSpacing.lg)
+            .padding(.top, AKSpacing.xs)
+            .padding(.bottom, AKSpacing.xxl)
         }
     }
 
     private var subtitleTrackList: some View {
         ScrollView(.vertical, showsIndicators: true) {
-            LazyVStack(spacing: 8) {
+            LazyVStack(spacing: AKSpacing.xs) {
                 // "Off" Option
                 let isOff = coordinator.selectedSubtitleTrack == nil || coordinator.selectedSubtitleTrack?.isOff == true
                 trackRow(track: AKMediaTrackOption.off, isSelected: isOff) {
@@ -148,16 +148,16 @@ public struct AKTrackSelectorSheet: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 32)
+            .padding(.horizontal, AKSpacing.lg)
+            .padding(.top, AKSpacing.xs)
+            .padding(.bottom, AKSpacing.xxl)
         }
     }
 
     private func trackRow(track: AKMediaTrackOption, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: AKSpacing.sm) {
+                VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                     Text(track.title)
                         .font(isSelected ? typography.subheadline.weight(.semibold) : typography.subheadline.weight(.medium))
                         .foregroundColor(isSelected ? palette.foregroundPrimary : palette.foregroundSecondary)
@@ -177,8 +177,8 @@ public struct AKTrackSelectorSheet: View {
                         .foregroundColor(palette.accent)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.vertical, AKSpacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(isSelected ? palette.accent.opacity(0.15) : Color.white.opacity(0.04))
@@ -192,8 +192,8 @@ public struct AKTrackSelectorSheet: View {
     }
 
     private func emptyState(title: String, subtitle: String) -> some View {
-        VStack(spacing: 12) {
-            Spacer(minLength: 40)
+        VStack(spacing: AKSpacing.sm) {
+            Spacer(minLength: AKSpacing.xxxl)
             Image(systemName: "waveform.slash")
                 .font(.system(size: 40))
                 .foregroundColor(palette.foregroundTertiary)
@@ -204,7 +204,7 @@ public struct AKTrackSelectorSheet: View {
                 .font(typography.caption1)
                 .foregroundColor(palette.foregroundTertiary)
                 .multilineTextAlignment(.center)
-            Spacer(minLength: 40)
+            Spacer(minLength: AKSpacing.xxxl)
         }
     }
 }

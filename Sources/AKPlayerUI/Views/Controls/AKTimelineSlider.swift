@@ -71,7 +71,7 @@ public struct AKTimelineSlider: View {
     }
 
     public var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: AKSpacing.xxs) {
             GeometryReader { geometry in
                 let trackWidth = geometry.size.width
 
@@ -181,7 +181,7 @@ public struct AKTimelineSlider: View {
             bufferedTime: 900,
             cuePoints: [300, 900, 1500]
         )
-        .padding()
+        .padding(AKSpacing.md)
     }
 }
 
@@ -194,6 +194,6 @@ public struct AKTimelineSlider: View {
             isAdActive: true,
             isSeekEnabled: false
         )
-        .padding()
+        .padding(AKSpacing.md)
     }
 }

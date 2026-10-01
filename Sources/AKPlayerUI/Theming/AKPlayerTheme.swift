@@ -11,6 +11,7 @@ public struct AKPlayerTheme: Sendable {
     public var materials: AKMaterialTokens
     public var typography: AKTypography
     public var icons: AKIconProvider
+    public var spacing: AKSpacing.Type { AKSpacing.self }
 
     public init(
         palette: AKColorPalette = .standard,

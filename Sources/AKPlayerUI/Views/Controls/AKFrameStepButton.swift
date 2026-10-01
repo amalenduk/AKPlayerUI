@@ -61,7 +61,7 @@ public struct AKFrameStepButton: View {
 #Preview("Frame Step Buttons") {
     ZStack {
         Color.black.ignoresSafeArea()
-        HStack(spacing: 20) {
+        HStack(spacing: AKSpacing.lg) {
             AKFrameStepButton(direction: .backward, isEnabled: true, onStep: {})
             AKFrameStepButton(direction: .forward, isEnabled: true, onStep: {})
             AKFrameStepButton(direction: .forward, isEnabled: false, onStep: {})

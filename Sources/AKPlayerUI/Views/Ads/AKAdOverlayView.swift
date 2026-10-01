@@ -28,10 +28,10 @@ public struct AKAdOverlayView: View {
                 // Top Row: Pod Indicator Badge
                 VStack {
                     HStack {
-                        HStack(spacing: 8) {
+                        HStack(spacing: AKSpacing.xs) {
                             Circle()
                                 .fill(palette.adBreakIndicator)
-                                .frame(width: 8, height: 8)
+                                .frame(width: AKSpacing.xs, height: AKSpacing.xs)
 
                             Text("Ad \(adManager.currentAdIndex) of \(max(1, adManager.totalAdsInPod))")
                                 .font(typography.badge)
@@ -44,8 +44,8 @@ public struct AKAdOverlayView: View {
                                 .font(typography.timecodeSmall)
                                 .foregroundColor(.white.opacity(0.85))
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, AKSpacing.md)
+                        .padding(.vertical, AKSpacing.xs)
                         .background(
                             Capsule()
                                 .fill(Color.black.opacity(0.65))
@@ -57,8 +57,8 @@ public struct AKAdOverlayView: View {
 
                         Spacer()
                     }
-                    .padding(.top, 24)
-                    .padding(.horizontal, 24)
+                    .padding(.top, AKSpacing.xl)
+                    .padding(.horizontal, AKSpacing.xl)
 
                     Spacer()
 
@@ -66,15 +66,15 @@ public struct AKAdOverlayView: View {
                     HStack {
                         if let sponsor = adManager.sponsorName {
                             Link(destination: adManager.sponsorLinkURL ?? URL(string: "https://apple.com")!) {
-                                HStack(spacing: 6) {
+                                HStack(spacing: AKSpacing.xs) {
                                     Text("Sponsored by \(sponsor)")
                                         .font(typography.footnote)
                                     Image(systemName: "arrow.up.right")
                                         .font(typography.badgeSmall)
                                 }
                                 .foregroundColor(.white.opacity(0.9))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
+                                .padding(.horizontal, AKSpacing.sm)
+                                .padding(.vertical, AKSpacing.xs)
                                 .background(
                                     Capsule()
                                         .fill(Color.black.opacity(0.6))
@@ -91,7 +91,7 @@ public struct AKAdOverlayView: View {
                                 adManager.skipAd()
                             }
                         }) {
-                            HStack(spacing: 6) {
+                            HStack(spacing: AKSpacing.xs) {
                                 if adManager.isAdSkippable {
                                     Text("Skip Ad")
                                         .font(typography.button)
@@ -105,8 +105,8 @@ public struct AKAdOverlayView: View {
                                 }
                             }
                             .foregroundColor(adManager.isAdSkippable ? .black : .white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
+                            .padding(.horizontal, AKSpacing.md)
+                            .padding(.vertical, AKSpacing.xs)
                             .background(
                                 Capsule()
                                     .fill(adManager.isAdSkippable ? Color.white : Color.black.opacity(0.65))
@@ -120,8 +120,8 @@ public struct AKAdOverlayView: View {
                         .disabled(!adManager.isAdSkippable)
                         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: adManager.isAdSkippable)
                     }
-                    .padding(.bottom, 36)
-                    .padding(.horizontal, 24)
+                    .padding(.bottom, AKSpacing.xxl)
+                    .padding(.horizontal, AKSpacing.xl)
                 }
             }
             .transition(.opacity)

@@ -30,40 +30,40 @@ public struct AKAudioPlayerView: View {
             backgroundSurface
 
             // 2. Main Player Surface
-            VStack(spacing: 0) {
+            VStack(spacing: AKSpacing.zero) {
                 // Top Navigation Bar
                 topBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.md)
 
-                Spacer(minLength: 16)
+                Spacer(minLength: AKSpacing.md)
 
                 // Hero Artwork with spring zoom physics
                 heroArtwork
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, AKSpacing.xxl)
                     .layoutPriority(1)
 
-                Spacer(minLength: 24)
+                Spacer(minLength: AKSpacing.xl)
 
                 // Track Metadata & Favorite
                 metadataRow
-                    .padding(.horizontal, 28)
+                    .padding(.horizontal, AKSpacing.xl)
 
                 // Waveform / Progress Scrub Rail
                 progressRailSection
-                    .padding(.horizontal, 28)
-                    .padding(.top, 20)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.lg)
 
                 // Primary Transport Bar (Play/Pause, Skips, Shuffle, Repeat)
                 transportControls
-                    .padding(.horizontal, 24)
-                    .padding(.top, 12)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.sm)
 
                 // Bottom Sheet Triggers (Lyrics, Equalizer, Chapters, Queue)
                 bottomAuxiliaryToolbar
-                    .padding(.horizontal, 28)
-                    .padding(.top, 24)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.xl)
+                    .padding(.bottom, AKSpacing.xl)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -122,7 +122,7 @@ public struct AKAudioPlayerView: View {
             Spacer()
 
             // Header Pill
-            VStack(spacing: 2) {
+            VStack(spacing: AKSpacing.xxxs) {
                 Text("PLAYING FROM PLAYLIST")
                     .font(theme.typography.badgeSmall)
                     .foregroundColor(theme.palette.foregroundTertiary)
@@ -183,7 +183,7 @@ public struct AKAudioPlayerView: View {
                     )
                     .frame(width: side, height: side)
                     .overlay(
-                        VStack(spacing: 16) {
+                        VStack(spacing: AKSpacing.md) {
                             Image(systemName: "music.note")
                                 .font(.system(size: side * 0.28, weight: .light))
                                 .foregroundColor(.white.opacity(0.85))
@@ -192,8 +192,8 @@ public struct AKAudioPlayerView: View {
                                 Text(chapter.title)
                                     .font(theme.typography.footnote.weight(.medium))
                                     .foregroundColor(.white.opacity(0.8))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, AKSpacing.md)
+                                    .padding(.vertical, AKSpacing.xs)
                                     .background(.ultraThinMaterial)
                                     .clipShape(Capsule())
                             }
@@ -212,7 +212,7 @@ public struct AKAudioPlayerView: View {
 
     private var metadataRow: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
                 Text(coordinator.currentTitle)
                     .font(theme.typography.title2.weight(.bold))
                     .foregroundColor(theme.palette.foregroundPrimary)
@@ -242,7 +242,7 @@ public struct AKAudioPlayerView: View {
     }
 
     private var progressRailSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AKSpacing.xs) {
             // Interactive Timeline Slider with Cue Points
             AKTimelineSlider(
                 currentTime: coordinator.currentTime,
@@ -258,7 +258,7 @@ public struct AKAudioPlayerView: View {
     }
 
     private var transportControls: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: AKSpacing.zero) {
             // Shuffle Button
             Button(action: { coordinator.toggleShuffle() }) {
                 Image(systemName: "shuffle")
@@ -328,7 +328,7 @@ public struct AKAudioPlayerView: View {
 
             // Equalizer Trigger
             Button(action: { coordinator.presentSheet(.equalizer) }) {
-                HStack(spacing: 6) {
+                HStack(spacing: AKSpacing.xs) {
                     Image(systemName: "slider.vertical.3")
                         .font(theme.typography.button)
                     if coordinator.equalizer.isEnabled {

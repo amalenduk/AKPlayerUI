@@ -90,7 +90,7 @@ public struct AKVideoPlayerView: View {
     // MARK: - Subviews
 
     private var topBar: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: AKSpacing.md) {
             // Collapse / Dismiss Button
             Button(action: {
                 coordinator.collapse()
@@ -104,7 +104,7 @@ public struct AKVideoPlayerView: View {
             .buttonStyle(.plain)
 
             // Media Title & Metadata
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                 Text(coordinator.currentTitle)
                     .font(theme.typography.headline.weight(.bold))
                     .foregroundColor(.white)
@@ -121,7 +121,7 @@ public struct AKVideoPlayerView: View {
             Spacer()
 
             // Auxiliary Tools
-            HStack(spacing: 12) {
+            HStack(spacing: AKSpacing.sm) {
                 // Equalizer Sheet Trigger
                 if coordinator.configuration.capabilities.showsEqualizer {
                     toolButton(icon: "slider.vertical.3") {
@@ -142,12 +142,12 @@ public struct AKVideoPlayerView: View {
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
+        .padding(.horizontal, AKSpacing.xl)
+        .padding(.top, AKSpacing.xl)
     }
 
     private var centerTransport: some View {
-        HStack(spacing: 32) {
+        HStack(spacing: AKSpacing.xxl) {
             // Frame Step Backward (Queries Capabilities)
             if coordinator.configuration.capabilities.showsStepButtons {
                 AKFrameStepButton(
@@ -207,7 +207,7 @@ public struct AKVideoPlayerView: View {
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AKSpacing.sm) {
             // Timeline Scrubber (SRP)
             AKTimelineSlider(
                 currentTime: coordinator.currentTime,
@@ -251,21 +251,21 @@ public struct AKVideoPlayerView: View {
                             }
                         }
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: AKSpacing.xxs) {
                             Image(systemName: "aspectratio")
                             Text(coordinator.aspectRatio.rawValue)
                                 .font(theme.typography.badgeSmall)
                         }
                         .foregroundColor(.white.opacity(0.85))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, AKSpacing.xs)
+                        .padding(.vertical, AKSpacing.xxs)
                         .background(Capsule().fill(Color.white.opacity(0.12)))
                     }
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.bottom, 28)
+        .padding(.horizontal, AKSpacing.xl)
+        .padding(.bottom, AKSpacing.xxl)
     }
 
     private func toolButton(icon: String, action: @escaping () -> Void) -> some View {

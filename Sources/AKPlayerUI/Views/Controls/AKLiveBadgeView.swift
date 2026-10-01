@@ -32,10 +32,10 @@ public struct AKLiveBadgeView: View {
                 onJumpToLive?()
             }
         }) {
-            HStack(spacing: 6) {
+            HStack(spacing: AKSpacing.xs) {
                 Circle()
                     .fill(isAtLiveEdge ? Color.red : Color.gray)
-                    .frame(width: 8, height: 8)
+                    .frame(width: AKSpacing.xs, height: AKSpacing.xs)
                     .scaleEffect(isAtLiveEdge && isPulsing ? 1.25 : 1.0)
                     .opacity(isAtLiveEdge && isPulsing ? 0.7 : 1.0)
 
@@ -43,8 +43,8 @@ public struct AKLiveBadgeView: View {
                     .font(typography.badge)
                     .foregroundColor(.white)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.horizontal, AKSpacing.sm)
+            .padding(.vertical, AKSpacing.xxs)
             .background(
                 Capsule()
                     .fill(isAtLiveEdge ? Color.red.opacity(0.25) : Color.white.opacity(0.15))
@@ -74,7 +74,7 @@ public struct AKLiveBadgeView: View {
 #Preview("Live Badges") {
     ZStack {
         Color.black.ignoresSafeArea()
-        HStack(spacing: 20) {
+        HStack(spacing: AKSpacing.lg) {
             AKLiveBadgeView(isAtLiveEdge: true)
             AKLiveBadgeView(isAtLiveEdge: false, offsetSeconds: 740)
         }

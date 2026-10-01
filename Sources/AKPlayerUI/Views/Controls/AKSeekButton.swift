@@ -74,7 +74,7 @@ public struct AKSeekButton: View {
 #Preview("Seek Buttons") {
     ZStack {
         Color.black.ignoresSafeArea()
-        HStack(spacing: 24) {
+        HStack(spacing: AKSpacing.xl) {
             AKSeekButton(direction: .backward, stepSeconds: 10, onSeek: {})
             AKSeekButton(direction: .forward, stepSeconds: 15, onSeek: {})
             AKSeekButton(direction: .forward, stepSeconds: 30, isEnabled: false, onSeek: {})

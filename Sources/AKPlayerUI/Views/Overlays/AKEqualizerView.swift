@@ -25,10 +25,10 @@ public struct AKEqualizerView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: AKSpacing.lg) {
             // Header Row
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AKSpacing.xxs) {
                     Text("10-Band Graphic Equalizer")
                         .font(typography.title2.weight(.bold))
                         .foregroundColor(.white)
@@ -51,11 +51,11 @@ public struct AKEqualizerView: View {
                             .foregroundColor(.white.opacity(0.6))
                     }
                     .buttonStyle(.plain)
-                    .padding(.leading, 12)
+                    .padding(.leading, AKSpacing.sm)
                 }
             }
-            .padding(.horizontal)
-            .padding(.top, 16)
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.top, AKSpacing.md)
 
             // Dynamic Cubic Spline Frequency Response Curve
             ZStack {
@@ -83,11 +83,11 @@ public struct AKEqualizerView: View {
                 }
             }
             .frame(height: 120)
-            .padding(.horizontal)
+            .padding(.horizontal, AKSpacing.md)
 
             // Preset Pills Row
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
+                HStack(spacing: AKSpacing.xs) {
                     ForEach(AKEqualizerPreset.allCases) { preset in
                         Button(action: {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
@@ -97,8 +97,8 @@ public struct AKEqualizerView: View {
                             Text(preset.rawValue)
                                 .font(typography.caption1.weight(.semibold))
                                 .foregroundColor(equalizer.activePreset == preset ? .black : .white)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 7)
+                                .padding(.horizontal, AKSpacing.md)
+                                .padding(.vertical, AKSpacing.xs)
                                 .background(
                                     Capsule()
                                         .fill(equalizer.activePreset == preset ? Color.white : Color.white.opacity(0.12))
@@ -107,13 +107,13 @@ public struct AKEqualizerView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, AKSpacing.md)
             }
 
             // 10-Band Logarithmic Sliders
-            HStack(spacing: 8) {
+            HStack(spacing: AKSpacing.xs) {
                 ForEach(0..<equalizer.bands.count, id: \.self) { index in
-                    VStack(spacing: 8) {
+                    VStack(spacing: AKSpacing.xs) {
                         Text(String(format: "%+.1f", equalizer.bands[index].gain))
                             .font(typography.badgeSmall)
                             .foregroundColor(equalizer.bands[index].gain == 0 ? .white.opacity(0.4) : palette.accent)
@@ -162,12 +162,12 @@ public struct AKEqualizerView: View {
                 }
             }
             .frame(height: 180)
-            .padding(.horizontal)
+            .padding(.horizontal, AKSpacing.md)
             .disabled(!equalizer.isEnabled)
             .opacity(equalizer.isEnabled ? 1.0 : 0.5)
 
             // Preamp Gain Slider
-            HStack(spacing: 16) {
+            HStack(spacing: AKSpacing.md) {
                 Text("Preamp")
                     .font(typography.footnote.weight(.semibold))
                     .foregroundColor(.white.opacity(0.8))
@@ -180,8 +180,8 @@ public struct AKEqualizerView: View {
                     .foregroundColor(.white)
                     .frame(width: 60, alignment: .trailing)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 20)
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.bottom, AKSpacing.lg)
         }
         .background(
             RoundedRectangle(cornerRadius: 24)

@@ -34,12 +34,12 @@ public struct AKChapterSheet: View {
             Color.black.opacity(0.85).ignoresSafeArea()
             Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: AKSpacing.zero) {
                 // Header
                 headerBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 20)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.lg)
+                    .padding(.bottom, AKSpacing.sm)
 
                 // Chapter List
                 if coordinator.chapters.isEmpty {
@@ -55,7 +55,7 @@ public struct AKChapterSheet: View {
 
     private var headerBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
                 Text("CHAPTERS (\(coordinator.chapters.count))")
                     .font(typography.badgeSmall)
                     .foregroundColor(palette.accent)
@@ -83,7 +83,7 @@ public struct AKChapterSheet: View {
 
     private var chapterList: some View {
         ScrollView(.vertical, showsIndicators: true) {
-            LazyVStack(spacing: 8) {
+            LazyVStack(spacing: AKSpacing.xs) {
                 ForEach(coordinator.chapters) { chapter in
                     let isActive = chapter.id == activeChapterId
 
@@ -91,7 +91,7 @@ public struct AKChapterSheet: View {
                         coordinator.seek(to: chapter.startTime)
                         coordinator.dismissSheet()
                     }) {
-                        HStack(spacing: 16) {
+                        HStack(spacing: AKSpacing.md) {
                             // Chapter Number Badge
                             ZStack {
                                 Circle()
@@ -110,13 +110,13 @@ public struct AKChapterSheet: View {
                             }
 
                             // Title & Duration
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
                                 Text(chapter.title)
                                     .font(isActive ? typography.subheadline.weight(.bold) : typography.subheadline.weight(.medium))
                                     .foregroundColor(isActive ? palette.foregroundPrimary : palette.foregroundSecondary)
                                     .lineLimit(1)
 
-                                HStack(spacing: 8) {
+                                HStack(spacing: AKSpacing.xs) {
                                     Text(formatTimestamp(chapter.startTime))
                                         .font(typography.timecodeSmall)
                                         .foregroundColor(palette.foregroundTertiary)
@@ -138,8 +138,8 @@ public struct AKChapterSheet: View {
                                     .foregroundColor(palette.accent)
                             }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, AKSpacing.md)
+                        .padding(.vertical, AKSpacing.sm)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(isActive ? palette.accent.opacity(0.15) : Color.white.opacity(0.04))
@@ -152,14 +152,14 @@ public struct AKChapterSheet: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 12)
-            .padding(.bottom, 40)
+            .padding(.horizontal, AKSpacing.lg)
+            .padding(.top, AKSpacing.sm)
+            .padding(.bottom, AKSpacing.xxxl)
         }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AKSpacing.md) {
             Spacer()
             Image(systemName: "list.bullet.indent")
                 .font(.system(size: 44))
@@ -173,7 +173,7 @@ public struct AKChapterSheet: View {
                 .font(typography.footnote)
                 .foregroundColor(palette.foregroundTertiary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 36)
+                .padding(.horizontal, AKSpacing.xxl)
             Spacer()
         }
     }

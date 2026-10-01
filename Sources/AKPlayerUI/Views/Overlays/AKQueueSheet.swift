@@ -53,16 +53,16 @@ public struct AKQueueSheet: View {
             Color.black.opacity(0.85).ignoresSafeArea()
             Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: AKSpacing.zero) {
                 // Header
                 headerBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 20)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, AKSpacing.xl)
+                    .padding(.top, AKSpacing.lg)
+                    .padding(.bottom, AKSpacing.sm)
 
                 // Queue Content
                 ScrollView(.vertical, showsIndicators: true) {
-                    VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: AKSpacing.md) {
                         // Now Playing Section
                         nowPlayingSection
 
@@ -79,18 +79,18 @@ public struct AKQueueSheet: View {
                                 .font(typography.caption1)
                                 .foregroundColor(palette.foregroundTertiary)
                         }
-                        .padding(.top, 8)
+                        .padding(.top, AKSpacing.xs)
 
                         // Up Next Items
-                        LazyVStack(spacing: 8) {
+                        LazyVStack(spacing: AKSpacing.xs) {
                             ForEach(queueItems) { item in
                                 queueRow(item: item)
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 40)
+                    .padding(.horizontal, AKSpacing.lg)
+                    .padding(.top, AKSpacing.xs)
+                    .padding(.bottom, AKSpacing.xxxl)
                 }
             }
         }
@@ -100,7 +100,7 @@ public struct AKQueueSheet: View {
 
     private var headerBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
                 Text("PLAYING QUEUE")
                     .font(typography.badgeSmall)
                     .foregroundColor(palette.accent)
@@ -127,13 +127,13 @@ public struct AKQueueSheet: View {
     }
 
     private var nowPlayingSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AKSpacing.xs) {
             Text("NOW PLAYING")
                 .font(typography.badgeSmall)
                 .foregroundColor(palette.accent)
                 .tracking(1.2)
 
-            HStack(spacing: 14) {
+            HStack(spacing: AKSpacing.sm) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(palette.accent.opacity(0.8))
@@ -144,7 +144,7 @@ public struct AKQueueSheet: View {
                         .foregroundColor(.white)
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                     Text(coordinator.currentTitle)
                         .font(typography.subheadline.weight(.semibold))
                         .foregroundColor(palette.foregroundPrimary)
@@ -164,7 +164,7 @@ public struct AKQueueSheet: View {
                         .foregroundColor(palette.accent)
                 }
             }
-            .padding(14)
+            .padding(AKSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(palette.accent.opacity(0.12))
@@ -177,7 +177,7 @@ public struct AKQueueSheet: View {
     }
 
     private func queueRow(item: AKQueueItem) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: AKSpacing.sm) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color.white.opacity(0.08))
@@ -188,7 +188,7 @@ public struct AKQueueSheet: View {
                     .foregroundColor(palette.foregroundSecondary)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                 Text(item.title)
                     .font(typography.subheadline.weight(.medium))
                     .foregroundColor(palette.foregroundPrimary)
@@ -209,10 +209,10 @@ public struct AKQueueSheet: View {
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 14))
                 .foregroundColor(palette.foregroundTertiary)
-                .padding(.leading, 4)
+                .padding(.leading, AKSpacing.xxs)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AKSpacing.md)
+        .padding(.vertical, AKSpacing.xs)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color.white.opacity(0.04))

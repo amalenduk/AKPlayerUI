@@ -50,8 +50,8 @@ public struct AKPlayerContainerView: View {
                         theme: coordinator.theme
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, AKSpacing.sm)
+                    .padding(.bottom, AKSpacing.xs)
                     .zIndex(1)
                 } else {
                     AKVideoMiniPlayerView(
@@ -60,7 +60,7 @@ public struct AKPlayerContainerView: View {
                         typography: coordinator.theme.typography
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .padding(.bottom, 8)
+                    .padding(.bottom, AKSpacing.xs)
                     .zIndex(1)
                 }
             }

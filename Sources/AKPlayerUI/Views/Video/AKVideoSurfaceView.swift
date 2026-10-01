@@ -76,6 +76,6 @@ public struct AKVideoSurfaceView: NSViewRepresentable {
                     .font(.system(size: 64))
                     .foregroundColor(.white.opacity(0.3))
             )
-            .padding()
+            .padding(AKSpacing.md)
     }
 }
