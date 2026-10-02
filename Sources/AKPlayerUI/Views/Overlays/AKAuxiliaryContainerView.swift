@@ -79,22 +79,20 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
     }
 
     // MARK: - Side Drawer Layout
-    // Runs edge-to-edge across the screen height (.ignoresSafeArea(edges: [.top, .bottom])).
-    // Header padding respects top safe-area insets (notch/Dynamic Island).
+    // Floating elevated panel restricted to safe area height (non-full-height card)
     private var drawerLayout: some View {
         VStack(spacing: AKSpacing.zero) {
             headerBar(isDrawer: true)
                 .padding(.horizontal, AKSpacing.lg)
-                .padding(.top, 54)
+                .padding(.top, AKSpacing.md)
                 .padding(.bottom, AKSpacing.sm)
-                .background(Color.black.opacity(0.3))
 
             Divider()
                 .background(Color.white.opacity(0.08))
 
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.bottom, AKSpacing.lg)
+                .padding(.bottom, AKSpacing.md)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(

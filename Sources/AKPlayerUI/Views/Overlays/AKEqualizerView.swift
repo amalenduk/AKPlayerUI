@@ -51,21 +51,25 @@ public struct AKEqualizerView: View {
                     .tint(palette.accent)
             },
             content: {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: AKSpacing.md) {
-                        // Dynamic Cubic Spline Frequency Response Curve
-                        frequencyResponseCurve
+                GeometryReader { contentGeo in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: AKSpacing.md) {
+                            // Dynamic Cubic Spline Frequency Response Curve
+                            frequencyResponseCurve
 
-                        // Quick Preset Selection Pills
-                        presetPillsRow
+                            // Quick Preset Selection Pills
+                            presetPillsRow
 
-                        // 10-Band Logarithmic Sliders
-                        fadersRow
+                            // 10-Band Logarithmic Sliders (Flexibly grows when sheet expands to full height)
+                            fadersRow
+                                .frame(minHeight: 145, maxHeight: .infinity)
 
-                        // Preamp Gain Slider
-                        preampSlider
+                            // Preamp Gain Slider
+                            preampSlider
+                        }
+                        .frame(minWidth: contentGeo.size.width, minHeight: contentGeo.size.height)
+                        .padding(.top, AKSpacing.xs)
                     }
-                    .padding(.top, AKSpacing.xs)
                 }
             }
         )
@@ -136,36 +140,40 @@ public struct AKEqualizerView: View {
                         .font(.system(size: 8, weight: .bold, design: .monospaced))
                         .foregroundColor(equalizer.bands[index].gain == 0 ? .white.opacity(0.4) : palette.accent)
 
-                    // Vertical Fader
+                    // Vertical Fader with Adaptive Travel Track
                     GeometryReader { faderGeo in
                         let h = faderGeo.size.height
+                        let thumbSize: CGFloat = 16
+                        let halfThumb: CGFloat = thumbSize * 0.5
+                        let trackHeight = max(1.0, h - thumbSize)
                         let gain = equalizer.bands[index].gain
                         let normalized = Double((gain + 12.0) / 24.0)
+                        let thumbY = halfThumb + trackHeight * (1.0 - CGFloat(normalized))
 
                         ZStack(alignment: .bottom) {
                             // Background Track
                             Capsule()
                                 .fill(Color.white.opacity(0.15))
-                                .frame(width: 4)
+                                .frame(width: 4, height: h)
 
                             // 0dB Center Marker
                             Rectangle()
                                 .fill(Color.white.opacity(0.35))
                                 .frame(width: 10, height: 1)
-                                .position(x: faderGeo.size.width * 0.5, y: h * 0.5)
+                                .position(x: faderGeo.size.width * 0.5, y: halfThumb + trackHeight * 0.5)
 
                             // Fader Thumb
                             Circle()
                                 .fill(equalizer.isEnabled ? palette.accent : Color.gray)
-                                .frame(width: 16, height: 16)
+                                .frame(width: thumbSize, height: thumbSize)
                                 .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                .position(x: faderGeo.size.width * 0.5, y: h * (1.0 - CGFloat(normalized)))
+                                .position(x: faderGeo.size.width * 0.5, y: thumbY)
                         }
                         .contentShape(Rectangle())
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { g in
-                                    let ratio = 1.0 - (g.location.y / h)
+                                    let ratio = 1.0 - ((g.location.y - halfThumb) / trackHeight)
                                     let newGain = Float(max(0.0, min(1.0, ratio)) * 24.0 - 12.0)
                                     equalizer.setGain(newGain, forBandAt: index)
                                 }
@@ -181,7 +189,7 @@ public struct AKEqualizerView: View {
                 }
             }
         }
-        .frame(height: 145)
+        .frame(minHeight: 145, maxHeight: .infinity)
         .padding(.horizontal, AKSpacing.sm)
         .disabled(!equalizer.isEnabled)
         .opacity(equalizer.isEnabled ? 1.0 : 0.45)

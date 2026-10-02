@@ -95,7 +95,7 @@ public struct AKAudioPlayerView: View {
                     }
                     .transition(.opacity)
 
-                // Trailing Drawer Panel (Runs edge-to-edge with ZERO top gap)
+                // Trailing Drawer Panel (Restricted to safe area height - non-full-screen)
                 GeometryReader { geo in
                     HStack(spacing: 0) {
                         Spacer()
@@ -104,7 +104,6 @@ public struct AKAudioPlayerView: View {
                             .frame(width: min(geo.size.width * 0.88, 380))
                     }
                 }
-                .ignoresSafeArea(edges: [.top, .bottom])
                 .transition(.move(edge: .trailing))
             }
         }
