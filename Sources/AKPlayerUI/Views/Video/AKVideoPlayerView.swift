@@ -84,6 +84,9 @@ public struct AKVideoPlayerView: View {
         }
         .sheet(item: $coordinator.activeSheet) { sheet in
             sheetView(for: sheet)
+                .presentationDetents([.fraction(0.68), .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.96))
         }
     }
 
@@ -208,7 +211,7 @@ public struct AKVideoPlayerView: View {
 
     private var bottomBar: some View {
         VStack(spacing: AKSpacing.sm) {
-            // Timeline Scrubber (SRP)
+            // Timeline Scrubber (SRP) with full Live DVR support
             AKTimelineSlider(
                 currentTime: coordinator.currentTime,
                 duration: coordinator.duration,
@@ -216,8 +219,15 @@ public struct AKVideoPlayerView: View {
                 cuePoints: coordinator.configuration.ads.cuePoints,
                 isAdActive: coordinator.adManager.isAdActive,
                 isSeekEnabled: coordinator.capabilities.canSeek,
+                isLive: coordinator.capabilities.isLive,
+                isAtLiveEdge: coordinator.isAtLiveEdge,
+                liveOffset: coordinator.liveOffset,
                 palette: theme.palette,
                 typography: theme.typography,
+                onJumpToLive: {
+                    coordinator.jumpToLive()
+                    resetHUDTimer()
+                },
                 onScrubBegan: {
                     hideHUDTask?.cancel()
                 },
@@ -232,14 +242,6 @@ public struct AKVideoPlayerView: View {
 
             // Bottom Accessories Row
             HStack {
-                // Live Stream Beacon if applicable
-                if coordinator.capabilities.isLive {
-                    AKLiveBadgeView(
-                        isAtLiveEdge: true,
-                        offsetSeconds: 0
-                    )
-                }
-
                 Spacer()
 
                 // Aspect Ratio Selector
@@ -286,11 +288,54 @@ public struct AKVideoPlayerView: View {
             AKEqualizerView(
                 equalizer: coordinator.equalizer,
                 palette: theme.palette,
-                onDismiss: { coordinator.dismissSheet() }
+                typography: theme.typography,
+                placementMode: .sheet,
+                title: "Graphic Equalizer",
+                subtitle: coordinator.currentTitle.isEmpty ? "10-Band DSP Audio Equalizer" : coordinator.currentTitle,
+                onDismiss: { coordinator.dismissAuxiliary() }
             )
-        default:
-            Text("Sheet: \(sheet.title)")
-                .presentationDetents([.medium, .large])
+        case .chapters:
+            AKChapterSheet(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: .sheet,
+                onDismiss: { coordinator.dismissAuxiliary() }
+            )
+        case .lyrics:
+            AKLyricsView(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: .sheet,
+                onDismiss: { coordinator.dismissAuxiliary() }
+            )
+        case .queue:
+            AKQueueSheet(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: .sheet,
+                onDismiss: { coordinator.dismissAuxiliary() }
+            )
+        case .trackSelection:
+            AKTrackSelectorSheet(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: .sheet,
+                onDismiss: { coordinator.dismissAuxiliary() }
+            )
+        case .details:
+            AKEqualizerView(
+                equalizer: coordinator.equalizer,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: .sheet,
+                title: "Media Details",
+                subtitle: coordinator.currentTitle,
+                onDismiss: { coordinator.dismissAuxiliary() }
+            )
         }
     }
 

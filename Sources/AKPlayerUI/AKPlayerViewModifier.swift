@@ -13,7 +13,7 @@ public struct AKPlayerOverlayModifier: ViewModifier {
     }
 
     public func body(content: Content) -> some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             content
 
             AKPlayerContainerView(coordinator: coordinator)

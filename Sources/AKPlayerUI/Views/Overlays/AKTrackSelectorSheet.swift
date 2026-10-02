@@ -6,82 +6,60 @@
 import SwiftUI
 import AKPlayer
 
-/// Sheet allowing user to select active audio language track and subtitles/closed captions.
-/// Driven directly by `AKPlayer`'s `AKMediaTrackOption`.
+/// Interactive sheet enabling users to select audio languages and closed caption / subtitle tracks.
+/// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKTrackSelectorSheet: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     public var palette: AKColorPalette
     public var typography: AKTypography
+    public var placementMode: AKOverlayPlacementMode
+    public var onDismiss: (() -> Void)?
 
     @State private var selectedTab: Int = 0 // 0 = Audio, 1 = Subtitles
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
         palette: AKColorPalette = .standard,
-        typography: AKTypography = .standard
+        typography: AKTypography = .standard,
+        placementMode: AKOverlayPlacementMode = .sheet,
+        onDismiss: (() -> Void)? = nil
     ) {
         self.coordinator = coordinator
         self.palette = palette
         self.typography = typography
+        self.placementMode = placementMode
+        self.onDismiss = onDismiss
     }
 
     public var body: some View {
-        ZStack {
-            // Background blur
-            Color.black.opacity(0.85).ignoresSafeArea()
-            Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
+        AKAuxiliaryContainerView(
+            badge: "Audio & Subtitles",
+            title: coordinator.currentTitle.isEmpty ? "Track Options" : coordinator.currentTitle,
+            subtitle: coordinator.currentSubtitle,
+            placementMode: placementMode,
+            palette: palette,
+            typography: typography,
+            onDismiss: onDismiss,
+            content: {
+                VStack(spacing: AKSpacing.zero) {
+                    // Segmented Tab Picker (Audio vs Subtitles)
+                    pickerTabs
+                        .padding(.horizontal, AKSpacing.lg)
+                        .padding(.top, AKSpacing.md)
+                        .padding(.bottom, AKSpacing.sm)
 
-            VStack(spacing: AKSpacing.zero) {
-                // Header
-                headerBar
-                    .padding(.horizontal, AKSpacing.xl)
-                    .padding(.top, AKSpacing.lg)
-
-                // Segmented Tab Picker (Audio vs Subtitles)
-                pickerTabs
-                    .padding(.horizontal, AKSpacing.xl)
-                    .padding(.top, AKSpacing.md)
-                    .padding(.bottom, AKSpacing.sm)
-
-                // Track List
-                if selectedTab == 0 {
-                    audioTrackList
-                } else {
-                    subtitleTrackList
+                    // Track List
+                    if selectedTab == 0 {
+                        audioTrackList
+                    } else {
+                        subtitleTrackList
+                    }
                 }
             }
-        }
+        )
     }
 
     // MARK: - Subviews
-
-    private var headerBar: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
-                Text("AUDIO & SUBTITLES")
-                    .font(typography.badgeSmall)
-                    .foregroundColor(palette.accent)
-                    .tracking(1.4)
-
-                Text(coordinator.currentTitle)
-                    .font(typography.headline)
-                    .foregroundColor(palette.foregroundPrimary)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            Button(action: { coordinator.dismissSheet() }) {
-                Image(systemName: "xmark")
-                    .font(typography.button)
-                    .foregroundColor(palette.foregroundSecondary)
-                    .frame(width: 32, height: 32)
-                    .background(Color.white.opacity(0.12))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
 
     private var pickerTabs: some View {
         HStack(spacing: AKSpacing.zero) {

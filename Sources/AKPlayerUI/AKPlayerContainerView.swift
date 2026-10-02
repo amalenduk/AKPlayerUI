@@ -50,7 +50,6 @@ public struct AKPlayerContainerView: View {
                         theme: coordinator.theme
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .padding(.horizontal, AKSpacing.sm)
                     .padding(.bottom, AKSpacing.xs)
                     .zIndex(1)
                 } else {
@@ -65,6 +64,7 @@ public struct AKPlayerContainerView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .animation(.spring(response: 0.38, dampingFraction: 0.82), value: coordinator.presentationMode)
     }
 }

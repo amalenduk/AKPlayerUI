@@ -19,24 +19,31 @@ public struct AKLyricLine: Identifiable, Sendable, Equatable {
     }
 }
 
-/// Time-synchronized karaoke-style lyrics display sheet.
-/// Features dynamic font scaling, smooth autoscrolling, and one-tap seeking by lyric line.
+/// Time-synchronized karaoke-style lyrics display view.
+/// Features Apple Music-style gradient edge fading, dynamic active line scaling, and tap-to-seek.
+/// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKLyricsView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     public var palette: AKColorPalette
     public var typography: AKTypography
+    public var placementMode: AKOverlayPlacementMode
     public var lyrics: [AKLyricLine]
+    public var onDismiss: (() -> Void)?
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
         palette: AKColorPalette = .standard,
         typography: AKTypography = .standard,
-        lyrics: [AKLyricLine] = AKLyricsView.sampleLyrics
+        placementMode: AKOverlayPlacementMode = .sheet,
+        lyrics: [AKLyricLine] = AKLyricsView.sampleLyrics,
+        onDismiss: (() -> Void)? = nil
     ) {
         self.coordinator = coordinator
         self.palette = palette
         self.typography = typography
+        self.placementMode = placementMode
         self.lyrics = lyrics
+        self.onDismiss = onDismiss
     }
 
     private var activeIndex: Int? {
@@ -44,86 +51,77 @@ public struct AKLyricsView: View {
     }
 
     public var body: some View {
-        ZStack {
-            // Background blur
-            Color.black.opacity(0.85).ignoresSafeArea()
-            Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
+        AKAuxiliaryContainerView(
+            badge: "Synced Lyrics",
+            title: coordinator.currentTitle.isEmpty ? "Lyrics" : coordinator.currentTitle,
+            subtitle: coordinator.currentSubtitle,
+            placementMode: placementMode,
+            palette: palette,
+            typography: typography,
+            onDismiss: onDismiss,
+            content: {
+                lyricsContent
+            }
+        )
+    }
 
-            VStack(spacing: AKSpacing.zero) {
-                // Header
-                headerBar
-                    .padding(.horizontal, AKSpacing.xl)
-                    .padding(.top, AKSpacing.lg)
+    // MARK: - Karaoke Lyrics Content
 
-                // Scrollable Synced Lyrics
-                ScrollViewReader { proxy in
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(alignment: .leading, spacing: AKSpacing.xxl) {
-                            Color.clear.frame(height: AKSpacing.xxxl)
+    private var lyricsContent: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(alignment: .leading, spacing: AKSpacing.lg) {
+                    Color.clear.frame(height: AKSpacing.sm)
 
-                            ForEach(Array(lyrics.enumerated()), id: \.element.id) { index, line in
-                                let isActive = index == (activeIndex ?? 0)
+                    ForEach(Array(lyrics.enumerated()), id: \.element.id) { index, line in
+                        let isActive = index == (activeIndex ?? 0)
 
-                                Button(action: {
-                                    coordinator.seek(to: line.timestamp)
-                                }) {
-                                    Text(line.text)
-                                        .font(isActive ? typography.lyricsActive : typography.lyricsInactive)
-                                        .foregroundColor(isActive ? palette.foregroundPrimary : palette.foregroundTertiary)
-                                        .opacity(isActive ? 1.0 : 0.45)
-                                        .blur(radius: isActive ? 0 : 0.3)
-                                        .scaleEffect(isActive ? 1.04 : 1.0, anchor: .leading)
-                                        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isActive)
-                                }
-                                .buttonStyle(.plain)
-                                .id(line.id)
+                        Button(action: {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                coordinator.seek(to: line.timestamp)
                             }
+                        }) {
+                            Text(line.text)
+                                .font(isActive ? .system(size: 24, weight: .bold, design: .rounded) : .system(size: 18, weight: .medium, design: .rounded))
+                                .foregroundColor(isActive ? .white : .white.opacity(0.35))
+                                .scaleEffect(isActive ? 1.03 : 1.0, anchor: .leading)
+                                .shadow(color: isActive ? palette.accent.opacity(0.4) : .clear, radius: 8, x: 0, y: 2)
+                                .animation(.spring(response: 0.32, dampingFraction: 0.78), value: isActive)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                        .id(line.id)
+                    }
 
-                            Color.clear.frame(height: 120)
-                        }
-                        .padding(.horizontal, AKSpacing.xl)
+                    Color.clear.frame(height: 80)
+                }
+                .padding(.horizontal, AKSpacing.xl)
+            }
+            .mask(
+                VStack(spacing: 0) {
+                    LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 24)
+                    Rectangle().fill(.black)
+                    LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 48)
+                }
+            )
+            .onChange(of: activeIndex) { _, newIndex in
+                if let newIndex = newIndex, newIndex < lyrics.count {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                        proxy.scrollTo(lyrics[newIndex].id, anchor: .center)
                     }
-                    .onChange(of: activeIndex) { _, newIndex in
-                        if let newIndex = newIndex, newIndex < lyrics.count {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                proxy.scrollTo(lyrics[newIndex].id, anchor: .center)
-                            }
-                        }
-                    }
+                }
+            }
+            .onAppear {
+                if let current = activeIndex, current < lyrics.count {
+                    proxy.scrollTo(lyrics[current].id, anchor: .center)
                 }
             }
         }
     }
 
-    private var headerBar: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
-                Text("LYRICS")
-                    .font(typography.badgeSmall)
-                    .foregroundColor(palette.accent)
-                    .tracking(1.4)
-
-                Text(coordinator.currentTitle)
-                    .font(typography.headline)
-                    .foregroundColor(palette.foregroundPrimary)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            Button(action: { coordinator.dismissSheet() }) {
-                Image(systemName: "xmark")
-                    .font(typography.button)
-                    .foregroundColor(palette.foregroundSecondary)
-                    .frame(width: 32, height: 32)
-                    .background(Color.white.opacity(0.12))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    // MARK: - Sample Lyrics
+    // MARK: - Sample Lyrics Catalog
     public static let sampleLyrics: [AKLyricLine] = [
         AKLyricLine(timestamp: 0, text: "I'm tryna put you in the worst mood, ah"),
         AKLyricLine(timestamp: 10, text: "P1 cleaner than your church shoes, ah"),
@@ -139,8 +137,10 @@ public struct AKLyricsView: View {
 }
 
 // MARK: - SwiftUI Preview
-
 #Preview("Synced Lyrics") {
-    AKLyricsView(coordinator: .previewAudioMock)
-        .preferredColorScheme(.dark)
+    ZStack {
+        Color.black.ignoresSafeArea()
+        AKLyricsView(coordinator: .previewAudioMock)
+    }
+    .preferredColorScheme(.dark)
 }

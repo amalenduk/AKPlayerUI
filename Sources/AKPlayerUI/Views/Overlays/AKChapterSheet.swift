@@ -9,19 +9,27 @@ import AKPlayer
 
 /// Interactive chapter picker sheet for audiobooks, podcasts, and long-form video.
 /// Consumes `AKChapter` directly from the `AKPlayer` core engine.
+/// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKChapterSheet: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     public var palette: AKColorPalette
     public var typography: AKTypography
+    public var placementMode: AKOverlayPlacementMode
+    public var onDismiss: (() -> Void)?
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
         palette: AKColorPalette = .standard,
-        typography: AKTypography = .standard
+        typography: AKTypography = .standard,
+        placementMode: AKOverlayPlacementMode = .sheet,
+        showHeader: Bool = true,
+        onDismiss: (() -> Void)? = nil
     ) {
         self.coordinator = coordinator
         self.palette = palette
         self.typography = typography
+        self.placementMode = placementMode
+        self.onDismiss = onDismiss
     }
 
     private var activeChapterId: Int? {
@@ -29,57 +37,25 @@ public struct AKChapterSheet: View {
     }
 
     public var body: some View {
-        ZStack {
-            // Background blur
-            Color.black.opacity(0.85).ignoresSafeArea()
-            Rectangle().fill(.ultraThinMaterial).ignoresSafeArea()
-
-            VStack(spacing: AKSpacing.zero) {
-                // Header
-                headerBar
-                    .padding(.horizontal, AKSpacing.xl)
-                    .padding(.top, AKSpacing.lg)
-                    .padding(.bottom, AKSpacing.sm)
-
-                // Chapter List
+        AKAuxiliaryContainerView(
+            badge: "Chapters (\(coordinator.chapters.count))",
+            title: coordinator.currentTitle.isEmpty ? "Media Chapters" : coordinator.currentTitle,
+            subtitle: coordinator.currentSubtitle,
+            placementMode: placementMode,
+            palette: palette,
+            typography: typography,
+            onDismiss: onDismiss,
+            content: {
                 if coordinator.chapters.isEmpty {
                     emptyState
                 } else {
                     chapterList
                 }
             }
-        }
+        )
     }
 
     // MARK: - Subviews
-
-    private var headerBar: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: AKSpacing.xxs) {
-                Text("CHAPTERS (\(coordinator.chapters.count))")
-                    .font(typography.badgeSmall)
-                    .foregroundColor(palette.accent)
-                    .tracking(1.4)
-
-                Text(coordinator.currentTitle)
-                    .font(typography.headline)
-                    .foregroundColor(palette.foregroundPrimary)
-                    .lineLimit(1)
-            }
-
-            Spacer()
-
-            Button(action: { coordinator.dismissSheet() }) {
-                Image(systemName: "xmark")
-                    .font(typography.button)
-                    .foregroundColor(palette.foregroundSecondary)
-                    .frame(width: 32, height: 32)
-                    .background(Color.white.opacity(0.12))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
 
     private var chapterList: some View {
         ScrollView(.vertical, showsIndicators: true) {
@@ -89,7 +65,6 @@ public struct AKChapterSheet: View {
 
                     Button(action: {
                         coordinator.seek(to: chapter.startTime)
-                        coordinator.dismissSheet()
                     }) {
                         HStack(spacing: AKSpacing.md) {
                             // Chapter Number Badge
@@ -100,7 +75,7 @@ public struct AKChapterSheet: View {
 
                                 if isActive {
                                     Image(systemName: "play.fill")
-                                        .font(typography.badgeSmall)
+                                        .font(.system(size: 11, weight: .bold))
                                         .foregroundColor(.white)
                                 } else {
                                     Text("\(chapter.id)")
@@ -134,7 +109,7 @@ public struct AKChapterSheet: View {
 
                             if isActive {
                                 Image(systemName: "checkmark")
-                                    .font(typography.button)
+                                    .font(.system(size: 14, weight: .bold))
                                     .foregroundColor(palette.accent)
                             }
                         }
@@ -154,7 +129,7 @@ public struct AKChapterSheet: View {
             }
             .padding(.horizontal, AKSpacing.lg)
             .padding(.top, AKSpacing.sm)
-            .padding(.bottom, AKSpacing.xxxl)
+            .padding(.bottom, AKSpacing.xl)
         }
     }
 
@@ -193,7 +168,6 @@ public struct AKChapterSheet: View {
 }
 
 // MARK: - SwiftUI Preview
-
 #Preview("Chapter Sheet") {
     AKChapterSheet(coordinator: .previewChapterMock)
         .preferredColorScheme(.dark)

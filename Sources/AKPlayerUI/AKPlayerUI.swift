@@ -24,6 +24,8 @@ public enum AKPlayerUI {
         title: String? = nil,
         subtitle: String? = nil,
         artworkURL: URL? = nil,
+        presentationMode: AKPlayerPresentationMode? = nil,
+        isAudioOnly: Bool? = nil,
         configuration: AKPlayerConfiguration? = nil
     ) {
         shared.load(
@@ -31,6 +33,8 @@ public enum AKPlayerUI {
             title: title,
             subtitle: subtitle,
             artworkURL: artworkURL,
+            presentationMode: presentationMode,
+            isAudioOnly: isAudioOnly,
             configuration: configuration
         )
     }
@@ -41,12 +45,16 @@ public enum AKPlayerUI {
         media: any AKPlayable,
         autoPlay: Bool = true,
         at startPosition: AKSeekTarget? = nil,
+        presentationMode: AKPlayerPresentationMode? = nil,
+        isAudioOnly: Bool? = nil,
         configuration: AKPlayerConfiguration? = nil
     ) {
         shared.load(
             media: media,
             autoPlay: autoPlay,
             at: startPosition,
+            presentationMode: presentationMode,
+            isAudioOnly: isAudioOnly,
             configuration: configuration
         )
     }

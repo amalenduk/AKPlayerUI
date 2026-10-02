@@ -23,6 +23,10 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     // MARK: - Presentation & Navigation
     @Published public var presentationMode: AKPlayerPresentationMode = .hidden
     @Published public var activeSheet: AKPlayerAuxiliarySheet? = nil
+    @Published public var overlayPlacement: AKOverlayPlacementMode = .inline
+    @Published public var isAtLiveEdge: Bool = true
+    @Published public var liveOffset: TimeInterval = 0
+    @Published public var activeInlineOverlay: AKPlayerAuxiliarySheet? = nil
 
     // MARK: - Active Playback State (Driven by AKPlayer)
     @Published public private(set) var state: AKPlayerState = .idle
@@ -40,6 +44,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     @Published public private(set) var currentTitle: String = ""
     @Published public private(set) var currentSubtitle: String = ""
     @Published public private(set) var currentArtworkURL: URL?
+    @Published public private(set) var currentArtworkImage: AKPlatformImage?
     @Published public private(set) var chapters: [AKChapter] = []
     @Published public private(set) var activeChapter: AKChapter?
     @Published public private(set) var interstitialMarkers: [AKInterstitialMarker] = []
@@ -95,6 +100,8 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         media: any AKPlayable,
         autoPlay: Bool = true,
         at startPosition: AKSeekTarget? = nil,
+        presentationMode: AKPlayerPresentationMode? = nil,
+        isAudioOnly: Bool? = nil,
         configuration: AKPlayerConfiguration? = nil
     ) {
         if let config = configuration {
@@ -104,16 +111,32 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         self.currentMedia = media
         self.currentTitle = media.staticMetadata?.title ?? media.url.deletingPathExtension().lastPathComponent
         self.currentSubtitle = media.staticMetadata?.artist ?? ""
+        self.currentArtworkImage = nil
+        self.currentArtworkURL = nil
+
+        // Extract artwork from staticMetadata if provided
+        if let artwork = media.staticMetadata?.artwork {
+            switch artwork {
+            case .image(let img):
+                self.currentArtworkImage = img
+            case .data(let data):
+                self.currentArtworkImage = AKPlatformImage(data: data)
+            default:
+                break
+            }
+        }
 
         // Update capabilities based on media type & file characteristics
-        updateCapabilities(for: media)
+        updateCapabilities(for: media, explicitAudioOnly: isAudioOnly)
 
         // Reset positions
         self.currentTime = 0
         self.duration = 0
 
         // Present interface
-        if self.configuration.playback.openDirectlyInFullScreen {
+        if let mode = presentationMode {
+            self.presentationMode = mode
+        } else if self.configuration.playback.openDirectlyInFullScreen {
             self.presentationMode = .fullScreen
         } else {
             self.presentationMode = .miniPlayer
@@ -132,12 +155,14 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         title: String? = nil,
         subtitle: String? = nil,
         artworkURL: URL? = nil,
+        presentationMode: AKPlayerPresentationMode? = nil,
+        isAudioOnly: Bool? = nil,
         configuration: AKPlayerConfiguration? = nil
     ) {
         let isLive = url.absoluteString.contains(".m3u8") || url.absoluteString.contains("live")
         let mediaType: AKMediaType = isLive ? .stream(isLive: true) : .clip
         let media = AKMedia(url: url, type: mediaType)
-        load(media: media, configuration: configuration)
+        load(media: media, presentationMode: presentationMode, isAudioOnly: isAudioOnly, configuration: configuration)
 
         if let title = title {
             self.currentTitle = title
@@ -184,6 +209,12 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         guard capabilities.isLive else { return }
         Task {
             _ = await player.jumpToLive()
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    self.isAtLiveEdge = true
+                    self.liveOffset = 0
+                }
+            }
         }
     }
 
@@ -251,14 +282,56 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         }
     }
 
-    /// Presents an auxiliary sheet (e.g. Equalizer, Queue, Chapters).
-    public func presentSheet(_ sheet: AKPlayerAuxiliarySheet) {
-        activeSheet = sheet
+    /// Toggles an auxiliary interface (Lyrics, Chapters, Queue, Equalizer)
+    /// respecting the currently selected  mode.
+    public func toggleAuxiliary(_ sheet: AKPlayerAuxiliarySheet) {
+        switch overlayPlacement {
+        case .inline:
+            activeSheet = nil
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+                if activeInlineOverlay == sheet {
+                    activeInlineOverlay = nil
+                } else {
+                    activeInlineOverlay = sheet
+                }
+            }
+        case .sheet:
+            activeInlineOverlay = nil
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                if activeSheet == sheet {
+                    activeSheet = nil
+                } else {
+                    activeSheet = sheet
+                }
+            }
+        case .sideDrawer:
+            activeSheet = nil
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
+                if activeInlineOverlay == sheet {
+                    activeInlineOverlay = nil
+                } else {
+                    activeInlineOverlay = sheet
+                }
+            }
+        }
     }
 
-    /// Dismisses any active auxiliary sheet.
+    /// Dismisses any active auxiliary overlay or sheet.
+    public func dismissAuxiliary() {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+            activeInlineOverlay = nil
+            activeSheet = nil
+        }
+    }
+
+    /// Presents an auxiliary sheet or activates the overlay according to .
+    public func presentSheet(_ sheet: AKPlayerAuxiliarySheet) {
+        toggleAuxiliary(sheet)
+    }
+
+    /// Dismisses any active auxiliary sheet or inline overlay.
     public func dismissSheet() {
-        activeSheet = nil
+        dismissAuxiliary()
     }
 
     // MARK: - Track Selection Commands (AKMediaTrackOption)
@@ -301,11 +374,33 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
 
     // MARK: - Private Helpers
 
-    private func updateCapabilities(for media: any AKPlayable) {
+    private func updateCapabilities(for media: any AKPlayable, explicitAudioOnly: Bool? = nil) {
         let isLive = media.isLive()
-        let ext = media.url.pathExtension.lowercased()
-        let audioExtensions = ["mp3", "m4a", "aac", "wav", "flac", "aiff", "alac", "caf", "ogg"]
-        self.isAudioOnly = audioExtensions.contains(ext)
+        if let explicit = explicitAudioOnly {
+            self.isAudioOnly = explicit
+        } else {
+            let ext = media.url.pathExtension.lowercased()
+            let audioExtensions: Set<String> = [
+                "mp3", "m4a", "aac", "wav", "flac", "aiff", "alac", "caf", "ogg",
+                "m4b", "wma", "opus", "weba", "mid", "midi"
+            ]
+            let urlString = media.url.absoluteString.lowercased()
+            let titleString = (media.staticMetadata?.title ?? currentTitle).lowercased()
+            let subtitleString = (media.staticMetadata?.artist ?? currentSubtitle).lowercased()
+
+            let isAudioByMeta = media.staticMetadata?.mediaType == .audio
+            let isAudioByExt = audioExtensions.contains(ext)
+            let isAudioByName = titleString.contains("audiobook") ||
+                                titleString.contains("audio-only") ||
+                                titleString.contains("soundhelix") ||
+                                subtitleString.contains("audiobook") ||
+                                subtitleString.contains("audio-only") ||
+                                urlString.contains("audiobook") ||
+                                urlString.contains("/a1/") ||
+                                urlString.contains("audio_only")
+
+            self.isAudioOnly = isAudioByMeta || isAudioByExt || isAudioByName
+        }
 
         self.capabilities = AKMediaCapabilities(
             canSeek: !isLive || (media.liveEdgeThreshold != nil),
@@ -511,5 +606,17 @@ extension AKPlayerCoordinator {
         let coordinator = previewAudioMock
         coordinator.presentationMode = .miniPlayer
         return coordinator
+    }
+}
+
+
+// MARK: - Image + AKPlatformImage Convenience
+public extension Image {
+    init(platformImage: AKPlatformImage) {
+        #if os(macOS)
+        self.init(nsImage: platformImage)
+        #else
+        self.init(uiImage: platformImage)
+        #endif
     }
 }

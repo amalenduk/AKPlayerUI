@@ -6,7 +6,8 @@
 import SwiftUI
 import AKPlayer
 
-/// Floating / Docked Mini Player Bar that attaches above the host tab bar.
+/// Floating / Docked Video Mini Player Bar that docks above the host tab bar.
+/// Standardized height (~58pt), comfortable touch targets, continuous corner clipping, and live stream awareness.
 public struct AKVideoMiniPlayerView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     public let palette: AKColorPalette
@@ -23,6 +24,9 @@ public struct AKVideoMiniPlayerView: View {
     }
 
     private var progress: Double {
+        if coordinator.capabilities.isLive {
+            return 1.0
+        }
         guard coordinator.duration > 0 else { return 0 }
         return max(0, min(1.0, coordinator.currentTime / coordinator.duration))
     }
@@ -32,16 +36,20 @@ public struct AKVideoMiniPlayerView: View {
             HStack(spacing: AKSpacing.sm) {
                 // Miniature Video Surface
                 ZStack {
-                    RoundedRectangle(cornerRadius: AKSpacing.xs)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.black)
 
                     AKVideoSurfaceView(
                         player: coordinator.player,
                         aspectRatio: .fill
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: AKSpacing.xs))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
-                .frame(width: 68, height: 42)
+                .frame(width: 58, height: 38)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    coordinator.expand()
+                }
 
                 // Title & Subtitle Info (Tapping expands into fullscreen)
                 VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
@@ -50,11 +58,24 @@ public struct AKVideoMiniPlayerView: View {
                         .foregroundColor(.white)
                         .lineLimit(1)
 
-                    if !coordinator.currentSubtitle.isEmpty {
-                        Text(coordinator.currentSubtitle)
-                            .font(typography.caption2)
-                            .foregroundColor(.white.opacity(0.65))
-                            .lineLimit(1)
+                    HStack(spacing: AKSpacing.xs) {
+                        if coordinator.capabilities.isLive {
+                            HStack(spacing: 3) {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 6, height: 6)
+                                Text("LIVE")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.red)
+                            }
+                        }
+
+                        if !coordinator.currentSubtitle.isEmpty {
+                            Text(coordinator.currentSubtitle)
+                                .font(typography.caption2)
+                                .foregroundColor(.white.opacity(0.65))
+                                .lineLimit(1)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -67,10 +88,16 @@ public struct AKVideoMiniPlayerView: View {
                 Button(action: {
                     coordinator.togglePlayPause()
                 }) {
-                    Image(systemName: coordinator.isPlaying ? "pause.fill" : "play.fill")
-                        .font(typography.headline.weight(.bold))
-                        .foregroundColor(.white)
-                        .frame(width: 36, height: 36)
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 36, height: 36)
+
+                        Image(systemName: coordinator.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .offset(x: coordinator.isPlaying ? 0 : 1)
+                    }
                 }
                 .buttonStyle(.plain)
 
@@ -78,39 +105,50 @@ public struct AKVideoMiniPlayerView: View {
                 Button(action: {
                     coordinator.dismiss()
                 }) {
-                    Image(systemName: "xmark")
-                        .font(typography.footnote.weight(.bold))
-                        .foregroundColor(.white.opacity(0.7))
-                        .frame(width: 32, height: 32)
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: 30, height: 30)
+
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white.opacity(0.75))
+                    }
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, AKSpacing.md)
             .padding(.vertical, AKSpacing.xs)
 
-            // Bottom Progress Line
+            // Bottom Progress Line (Cleanly clipped inside card shape)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Rectangle()
                         .fill(Color.white.opacity(0.12))
-                        .frame(height: 2)
+                        .frame(height: 2.5)
 
                     Rectangle()
-                        .fill(coordinator.adManager.isAdActive ? palette.adActiveProgress : palette.accent)
-                        .frame(width: geo.size.width * CGFloat(progress), height: 2)
+                        .fill(
+                            coordinator.adManager.isAdActive ? palette.adActiveProgress :
+                                (coordinator.capabilities.isLive ? Color.red : palette.accent)
+                        )
+                        .frame(width: geo.size.width * CGFloat(progress), height: 2.5)
+                        .animation(.linear(duration: 0.25), value: progress)
                 }
             }
-            .frame(height: 2)
+            .frame(height: 2.5)
         }
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(red: 0.12, green: 0.12, blue: 0.15).opacity(0.95))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(red: 0.12, green: 0.12, blue: 0.16).opacity(0.96))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
-                .shadow(color: Color.black.opacity(0.35), radius: 10, x: 0, y: 4)
+                .shadow(color: Color.black.opacity(0.35), radius: 12, x: 0, y: 4)
         )
+        // CRITICAL: Clip entire card so progress bar cannot bleed outside rounded corners
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .padding(.horizontal, AKSpacing.sm)
     }
 }
