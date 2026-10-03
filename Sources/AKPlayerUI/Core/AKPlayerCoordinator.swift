@@ -409,16 +409,14 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
 
             let isAudioByMeta = media.staticMetadata?.mediaType == .audio
             let isAudioByExt = audioExtensions.contains(ext)
-            let isAudioByName = titleString.contains("audiobook") ||
-                                titleString.contains("audio-only") ||
-                                titleString.contains("soundhelix") ||
-                                subtitleString.contains("audiobook") ||
-                                subtitleString.contains("audio-only") ||
-                                urlString.contains("audiobook") ||
-                                urlString.contains("/a1/") ||
-                                urlString.contains("audio_only")
+            let isAudioByKeyword = titleString.contains("audiobook") ||
+                                   titleString.contains("audio-only") ||
+                                   subtitleString.contains("audiobook") ||
+                                   subtitleString.contains("audio-only") ||
+                                   urlString.contains("audiobook") ||
+                                   urlString.contains("audio_only")
 
-            self.isAudioOnly = isAudioByMeta || isAudioByExt || isAudioByName
+            self.isAudioOnly = isAudioByMeta || isAudioByExt || isAudioByKeyword
         }
 
         self.capabilities = AKMediaCapabilities(

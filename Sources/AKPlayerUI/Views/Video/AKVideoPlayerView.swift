@@ -12,10 +12,10 @@ public struct AKVideoPlayerView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     @ObservedObject public var uiState: AKPlayerUIState
     public let theme: AKPlayerTheme
-
+    
     @State private var isHUDVisible: Bool = true
     @State private var hideHUDTask: Task<Void, Never>?
-
+    
     public init(
         coordinator: AKPlayerCoordinator = .shared,
         uiState: AKPlayerUIState? = nil,
@@ -25,23 +25,23 @@ public struct AKVideoPlayerView: View {
         self.uiState = uiState ?? coordinator.uiState
         self.theme = theme
     }
-
+    
     private var isDrawerActive: Bool {
         uiState.isDrawerActive
     }
-
+    
     public var body: some View {
         ZStack {
             // Background Canvas
             Color.black.ignoresSafeArea()
-
+            
             // 1. Video Surface Pipeline
             AKVideoSurfaceView(
                 player: coordinator.player,
                 aspectRatio: coordinator.aspectRatio
             )
             .ignoresSafeArea()
-
+            
             // 2. Gesture Surface (Edge swipes, double-tap seek, pinch zoom)
             AKVideoGestureOverlay(
                 configuration: coordinator.configuration.gestures,
@@ -58,34 +58,34 @@ public struct AKVideoPlayerView: View {
                     resetHUDTimer()
                 }
             )
-
+            
             // 3. Native Interstitial Ad Overlay
             AKAdOverlayView(
                 adManager: coordinator.adManager,
                 palette: theme.palette
             )
-
+            
             // 4. Autohiding Glass HUD Overlays
             if isHUDVisible && !coordinator.adManager.isAdActive {
                 VStack {
                     // Top Navigation & Tool Bar
                     topBar
                         .transition(.move(edge: .top).combined(with: .opacity))
-
+                    
                     Spacer()
-
+                    
                     // Center Transport Controls
                     centerTransport
                         .transition(.scale(scale: 0.95).combined(with: .opacity))
-
+                    
                     Spacer()
-
+                    
                     // Bottom Timeline & Status Bar
                     bottomBar
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-
+            
             // 5. Side Drawer Mode: Slide-in Floating Frosted Glass Panel
             if isDrawerActive, let activeOverlay = uiState.activeInlineOverlay {
                 // Dimmed Backdrop
@@ -95,12 +95,12 @@ public struct AKVideoPlayerView: View {
                         coordinator.dismissAuxiliary()
                     }
                     .transition(.opacity)
-
+                
                 // Trailing Drawer Panel (Restricted to safe area height - non-full-screen)
                 GeometryReader { geo in
                     HStack(spacing: 0) {
                         Spacer()
-
+                        
                         sheetView(for: activeOverlay, placement: .sideDrawer)
                             .frame(width: min(geo.size.width * 0.88, 380))
                     }
@@ -118,10 +118,11 @@ public struct AKVideoPlayerView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.96))
         }
+        .environment(\.akPlayerTheme, theme)
     }
-
+    
     // MARK: - Subviews
-
+    
     private var topBar: some View {
         HStack(spacing: AKSpacing.md) {
             // Collapse / Dismiss Button
@@ -135,14 +136,14 @@ public struct AKVideoPlayerView: View {
                     .background(Circle().fill(Color.black.opacity(0.4)))
             }
             .buttonStyle(.plain)
-
+            
             // Media Title & Metadata
             VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                 Text(coordinator.currentTitle)
                     .font(theme.typography.headline.weight(.bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
-
+                
                 if !coordinator.currentSubtitle.isEmpty {
                     Text(coordinator.currentSubtitle)
                         .font(theme.typography.caption1)
@@ -150,9 +151,9 @@ public struct AKVideoPlayerView: View {
                         .lineLimit(1)
                 }
             }
-
+            
             Spacer()
-
+            
             // Auxiliary Tools
             HStack(spacing: AKSpacing.sm) {
                 // Equalizer Sheet Trigger
@@ -161,14 +162,14 @@ public struct AKVideoPlayerView: View {
                         uiState.presentSheet(.equalizer, isAudioOnly: coordinator.isAudioOnly)
                     }
                 }
-
+                
                 // Chapters Sheet Trigger
                 if coordinator.configuration.capabilities.showsChapters && !coordinator.chapters.isEmpty {
                     toolButton(icon: theme.icons.chapters) {
                         uiState.presentSheet(.chapters, isAudioOnly: coordinator.isAudioOnly)
                     }
                 }
-
+                
                 // Close / Dismiss Player Button
                 toolButton(icon: "xmark") {
                     coordinator.dismiss()
@@ -178,7 +179,7 @@ public struct AKVideoPlayerView: View {
         .padding(.horizontal, AKSpacing.xl)
         .padding(.top, AKSpacing.xl)
     }
-
+    
     private var centerTransport: some View {
         HStack(spacing: AKSpacing.xxl) {
             // Frame Step Backward (Queries Capabilities)
@@ -191,7 +192,7 @@ public struct AKVideoPlayerView: View {
                     resetHUDTimer()
                 }
             }
-
+            
             // Skip Backward
             if coordinator.configuration.capabilities.showsSkipButtons {
                 AKSeekButton(
@@ -203,17 +204,10 @@ public struct AKVideoPlayerView: View {
                     resetHUDTimer()
                 }
             }
-
+            
             // Play / Pause Central Button
-            AKPlayPauseButton(
-                isPlaying: coordinator.isPlaying,
-                isBuffering: coordinator.isBuffering,
-                isEnabled: coordinator.capabilities.canPause
-            ) {
-                coordinator.togglePlayPause()
-                resetHUDTimer()
-            }
-
+            AKPlayPauseButton(player: coordinator.player)
+            
             // Skip Forward
             if coordinator.configuration.capabilities.showsSkipButtons {
                 AKSeekButton(
@@ -225,7 +219,7 @@ public struct AKVideoPlayerView: View {
                     resetHUDTimer()
                 }
             }
-
+            
             // Frame Step Forward (Queries Capabilities)
             if coordinator.configuration.capabilities.showsStepButtons {
                 AKFrameStepButton(
@@ -238,7 +232,7 @@ public struct AKVideoPlayerView: View {
             }
         }
     }
-
+    
     private var bottomBar: some View {
         VStack(spacing: AKSpacing.sm) {
             // Timeline Scrubber (SRP) with full Live DVR support
@@ -269,11 +263,11 @@ public struct AKVideoPlayerView: View {
                     resetHUDTimer()
                 }
             )
-
+            
             // Bottom Accessories Row
             HStack {
                 Spacer()
-
+                
                 // Aspect Ratio Selector
                 if coordinator.configuration.capabilities.showsAspectSelector {
                     Menu {
@@ -299,7 +293,7 @@ public struct AKVideoPlayerView: View {
         .padding(.horizontal, AKSpacing.xl)
         .padding(.bottom, AKSpacing.xxl)
     }
-
+    
     private func toolButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
@@ -310,7 +304,7 @@ public struct AKVideoPlayerView: View {
         }
         .buttonStyle(.plain)
     }
-
+    
     @ViewBuilder
     private func sheetView(for sheet: AKPlayerAuxiliarySheet, placement: AKOverlayPlacementMode = .sheet) -> some View {
         switch sheet {
@@ -368,9 +362,9 @@ public struct AKVideoPlayerView: View {
             )
         }
     }
-
+    
     // MARK: - HUD Autohide Timer
-
+    
     private func toggleHUD() {
         withAnimation(.easeInOut(duration: 0.25)) {
             isHUDVisible.toggle()
@@ -381,7 +375,7 @@ public struct AKVideoPlayerView: View {
             hideHUDTask?.cancel()
         }
     }
-
+    
     private func resetHUDTimer() {
         hideHUDTask?.cancel()
         hideHUDTask = Task {

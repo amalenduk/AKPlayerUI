@@ -118,6 +118,7 @@ public struct AKAudioPlayerView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.96))
         }
+        .environment(\.akPlayerTheme, theme)
     }
 
     // MARK: - Subviews: Background & Navigation
@@ -484,14 +485,10 @@ public struct AKAudioPlayerView: View {
 
             Spacer()
 
-            // Play / Pause Central Button
+            // Play / Pause Central Button (Autonomous AKPlayer binding)
             AKPlayPauseButton(
-                isPlaying: coordinator.isPlaying,
-                isBuffering: coordinator.isBuffering,
-                size: 68,
-                iconColor: theme.palette.foregroundPrimary,
-                backgroundColor: theme.palette.accent.opacity(0.85),
-                onToggle: { coordinator.togglePlayPause() }
+                player: coordinator.player,
+                size: 68
             )
 
             Spacer()

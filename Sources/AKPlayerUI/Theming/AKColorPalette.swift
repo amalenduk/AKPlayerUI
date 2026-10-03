@@ -34,6 +34,11 @@ public struct AKColorPalette: Sendable, Equatable {
     /// Ultra-subtle border stroke color for glass elements.
     public var glassBorder: Color
 
+    /// Background / fill color for play action buttons.
+    public var playerActionButtons: Color
+    
+    public var playerActionBackgroundButtons: Color
+
     // MARK: - Aliases for Foreground Hierarchy
     public var foregroundPrimary: Color { textPrimary }
     public var foregroundSecondary: Color { textSecondary }
@@ -48,7 +53,9 @@ public struct AKColorPalette: Sendable, Equatable {
         textPrimary: Color = .white,
         textSecondary: Color = Color.white.opacity(0.7),
         hudBackground: Color = Color.black.opacity(0.4),
-        glassBorder: Color = Color.white.opacity(0.15)
+        glassBorder: Color = Color.white.opacity(0.15),
+        playActionButtons: Color = Color.yellow,
+        playerActionBackgroundButtons: Color = Color.white.opacity(0.18)
     ) {
         self.accent = accent
         self.progressRailRemaining = progressRailRemaining
@@ -59,6 +66,8 @@ public struct AKColorPalette: Sendable, Equatable {
         self.textSecondary = textSecondary
         self.hudBackground = hudBackground
         self.glassBorder = glassBorder
+        self.playerActionButtons = playActionButtons
+        self.playerActionBackgroundButtons = playerActionBackgroundButtons
     }
 
     public static let standard = AKColorPalette()
@@ -66,7 +75,8 @@ public struct AKColorPalette: Sendable, Equatable {
     public static let vibrant = AKColorPalette(
         accent: Color(red: 0.85, green: 0.15, blue: 0.95), // Neon Purple/Pink
         adBreakIndicator: Color(red: 1.0, green: 0.84, blue: 0.0),
-        adActiveProgress: Color(red: 1.0, green: 0.45, blue: 0.1)
+        adActiveProgress: Color(red: 1.0, green: 0.45, blue: 0.1),
+        playActionButtons: Color.yellow
     )
 
     public static let highContrast = AKColorPalette(
@@ -78,6 +88,7 @@ public struct AKColorPalette: Sendable, Equatable {
         textPrimary: .white,
         textSecondary: .white,
         hudBackground: Color.black.opacity(0.85),
-        glassBorder: Color.white.opacity(0.4)
+        glassBorder: Color.white.opacity(0.4),
+        playActionButtons: Color.yellow
     )
 }

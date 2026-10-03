@@ -23,12 +23,15 @@ public struct AKIconProvider: Sendable, Equatable {
     public var sleepTimer: String
     public var volumeMute: String
     public var volumeLow: String
+    public var volumeMid: String
     public var volumeHigh: String
     public var brightness: String
     public var expand: String
     public var collapse: String
     public var dismiss: String
-
+    public var brightnessMin: String
+    public var brightnessMax: String
+    
     public init(
         play: String = "play.fill",
         pause: String = "pause.fill",
@@ -46,11 +49,14 @@ public struct AKIconProvider: Sendable, Equatable {
         sleepTimer: String = "timer",
         volumeMute: String = "speaker.slash.fill",
         volumeLow: String = "speaker.wave.1.fill",
+        volumeMid: String = "speaker.wave.2.fill",
         volumeHigh: String = "speaker.wave.3.fill",
         brightness: String = "sun.max.fill",
         expand: String = "arrow.up.left.and.arrow.down.right",
         collapse: String = "chevron.down",
-        dismiss: String = "xmark"
+        dismiss: String = "xmark",
+        brightnessMin: String = "sun.min.fill",
+        brightnessMax: String = "sun.max.fill"
     ) {
         self.play = play
         self.pause = pause
@@ -68,12 +74,15 @@ public struct AKIconProvider: Sendable, Equatable {
         self.sleepTimer = sleepTimer
         self.volumeMute = volumeMute
         self.volumeLow = volumeLow
+        self.volumeMid = volumeMid
         self.volumeHigh = volumeHigh
         self.brightness = brightness
         self.expand = expand
         self.collapse = collapse
         self.dismiss = dismiss
+        self.brightnessMin = brightnessMin
+        self.brightnessMax = brightnessMax
     }
-
+    
     public static let standard = AKIconProvider()
 }

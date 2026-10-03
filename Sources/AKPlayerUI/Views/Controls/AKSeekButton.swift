@@ -8,13 +8,6 @@ import SwiftUI
 public enum AKSeekDirection: Sendable {
     case backward
     case forward
-
-    public var systemIconBase: String {
-        switch self {
-        case .backward: return "gobackward"
-        case .forward:  return "goforward"
-        }
-    }
 }
 
 /// Single Responsibility: Displays directional seek button with numerical badge offset, emitting seek action.
@@ -23,9 +16,17 @@ public struct AKSeekButton: View {
     public let stepSeconds: TimeInterval
     public let isEnabled: Bool
     public let size: CGFloat
-    public let foregroundColor: Color
     public let onSeek: () -> Void
-
+    
+    @Environment(\.akPlayerTheme) private var theme
+    
+    public var iconBase: String {
+        switch direction {
+        case .backward: return theme.icons.skipBackward
+        case .forward:  return theme.icons.skipForward
+        }
+    }
+    
     public init(
         direction: AKSeekDirection,
         stepSeconds: TimeInterval = 10,
@@ -38,30 +39,29 @@ public struct AKSeekButton: View {
         self.stepSeconds = stepSeconds
         self.isEnabled = isEnabled
         self.size = size
-        self.foregroundColor = foregroundColor
         self.onSeek = onSeek
     }
-
+    
     private var iconName: String {
         let rounded = Int(stepSeconds)
         switch rounded {
         case 5, 10, 15, 30, 45, 60, 75, 90:
-            return "\(direction.systemIconBase).\(rounded)"
+            return "\(iconBase).\(rounded)"
         default:
-            return direction.systemIconBase
+            return iconBase
         }
     }
-
+    
     public var body: some View {
         Button(action: onSeek) {
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.12))
+                    .fill(theme.palette.playerActionBackgroundButtons)
                     .frame(width: size, height: size)
-
+                
                 Image(systemName: iconName)
                     .font(.system(size: size * 0.45, weight: .semibold))
-                    .foregroundColor(foregroundColor)
+                    .foregroundColor(theme.palette.playerActionButtons)
             }
         }
         .buttonStyle(.plain)

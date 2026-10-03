@@ -29,3 +29,18 @@ public struct AKPlayerTheme: Sendable {
     public static let vibrant = AKPlayerTheme(palette: .vibrant)
     public static let highContrast = AKPlayerTheme(palette: .highContrast)
 }
+
+
+// MARK: - Environment Support
+
+private struct AKPlayerThemeKey: EnvironmentKey {
+    static let defaultValue: AKPlayerTheme = .standard
+}
+
+extension EnvironmentValues {
+    /// The current `AKPlayerTheme` applied to player components in this environment.
+    public var akPlayerTheme: AKPlayerTheme {
+        get { self[AKPlayerThemeKey.self] }
+        set { self[AKPlayerThemeKey.self] = newValue }
+    }
+}

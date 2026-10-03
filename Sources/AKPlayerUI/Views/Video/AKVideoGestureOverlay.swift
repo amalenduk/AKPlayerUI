@@ -133,20 +133,14 @@ public struct AKVideoGestureOverlay: View {
 
                 // Vertical Floating HUDs
                 if isShowingBrightnessHUD {
-                    HStack {
-                        AKBrightnessSlider(brightness: currentBrightness, isCompact: true, typography: typography)
-                            .padding(.leading, AKSpacing.xl)
-                        Spacer()
-                    }
+                    AKBrightnessSlider(brightness: currentBrightness, isCompact: true)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .transition(.opacity)
                 }
 
                 if isShowingVolumeHUD {
-                    HStack {
-                        Spacer()
-                        AKVolumeSlider(volume: currentVolume, isCompact: true, typography: typography)
-                            .padding(.trailing, AKSpacing.xl)
-                    }
+                    AKVolumeSlider(volume: currentVolume, isCompact: true, typography: typography)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .transition(.opacity)
                 }
             }

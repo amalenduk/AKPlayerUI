@@ -9,9 +9,10 @@ import SwiftUI
 public struct AKVolumeSlider: View {
     public let volume: Float // 0.0 ... 1.0
     public let isCompact: Bool
-    public let typography: AKTypography
     public let onVolumeChanged: ((Float) -> Void)?
-
+    
+    @Environment(\.akPlayerTheme) private var theme
+    
     public init(
         volume: Float,
         isCompact: Bool = false,
@@ -20,47 +21,47 @@ public struct AKVolumeSlider: View {
     ) {
         self.volume = max(0.0, min(1.0, volume))
         self.isCompact = isCompact
-        self.typography = typography
         self.onVolumeChanged = onVolumeChanged
     }
-
+    
     private var volumeIcon: String {
         if volume <= 0.01 {
-            return "speaker.slash.fill"
+            return theme.icons.volumeMute
         } else if volume < 0.35 {
-            return "speaker.wave.1.fill"
+            return theme.icons.volumeLow
         } else if volume < 0.7 {
-            return "speaker.wave.2.fill"
+            return theme.icons.volumeMid
         } else {
-            return "speaker.wave.3.fill"
+            return theme.icons.volumeHigh
         }
     }
-
+    
     public var body: some View {
         VStack(spacing: AKSpacing.xs) {
             Image(systemName: volumeIcon)
                 .font(.system(size: isCompact ? 14 : 18, weight: .semibold))
-                .foregroundColor(.white)
-
+                .foregroundColor(theme.palette.accent)
+            
             GeometryReader { geo in
                 let h = geo.size.height
                 ZStack(alignment: .bottom) {
                     Capsule()
                         .fill(Color.white.opacity(0.2))
                         .frame(width: isCompact ? 6 : 8)
-
+                    
                     Capsule()
-                        .fill(Color.white)
+                        .fill(theme.palette.accent)
                         .frame(width: isCompact ? 6 : 8, height: max(0, h * CGFloat(volume)))
                 }
                 .frame(maxWidth: .infinity)
             }
             .frame(height: isCompact ? 100 : 140)
-
+            
             Text("\(Int(volume * 100))%")
-                .font(typography.badgeSmall)
-                .foregroundColor(.white.opacity(0.8))
+                .font(theme.typography.badgeSmall)
+                .foregroundColor(theme.palette.accent.opacity(0.8))
         }
+        .frame(width: isCompact ? 100 : 140)
         .padding(.vertical, AKSpacing.sm)
         .padding(.horizontal, isCompact ? AKSpacing.xs : AKSpacing.sm)
         .background(
@@ -81,7 +82,7 @@ public struct AKVolumeSlider: View {
         HStack(spacing: AKSpacing.xxl) {
             AKVolumeSlider(volume: 0.0)
             AKVolumeSlider(volume: 0.45)
-            AKVolumeSlider(volume: 0.9)
+            AKVolumeSlider(volume: 0.9, isCompact: true)
         }
     }
 }
