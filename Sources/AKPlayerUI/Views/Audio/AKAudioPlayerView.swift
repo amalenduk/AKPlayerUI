@@ -544,10 +544,10 @@ public struct AKAudioPlayerView: View {
             auxiliaryButton(sheet: .equalizer, icon: "slider.vertical.3", label: "EQ")
 
             // Chapters Button
-            auxiliaryButton(sheet: .chapters, icon: "bookmark.fill", label: "Chapters")
+            auxiliaryButton(sheet: .chapters, icon: theme.icons.chapters, label: "Chapters")
 
             // Queue Button
-            auxiliaryButton(sheet: .queue, icon: "list.dash", label: "Queue")
+            auxiliaryButton(sheet: .queue, icon: "music.note.list", label: "Queue")
         }
     }
 
@@ -604,8 +604,8 @@ public struct AKAudioPlayerView: View {
                 palette: theme.palette,
                 typography: theme.typography,
                 placementMode: placement,
-                title: "Graphic Equalizer",
-                subtitle: coordinator.currentTitle.isEmpty ? "10-Band DSP Audio Equalizer" : coordinator.currentTitle,
+                title: "10-Band Graphic Equalizer",
+                subtitle: "Digital Signal Processing • 32Hz – 16kHz",
                 onDismiss: { coordinator.dismissAuxiliary() }
             )
         case .trackSelection:

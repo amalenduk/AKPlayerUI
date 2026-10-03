@@ -134,7 +134,7 @@ public struct AKVideoPlayerView: View {
 
                 // Chapters Sheet Trigger
                 if coordinator.configuration.capabilities.showsChapters && !coordinator.chapters.isEmpty {
-                    toolButton(icon: "bookmark.fill") {
+                    toolButton(icon: theme.icons.chapters) {
                         coordinator.presentSheet(.chapters)
                     }
                 }
@@ -290,8 +290,8 @@ public struct AKVideoPlayerView: View {
                 palette: theme.palette,
                 typography: theme.typography,
                 placementMode: .sheet,
-                title: "Graphic Equalizer",
-                subtitle: coordinator.currentTitle.isEmpty ? "10-Band DSP Audio Equalizer" : coordinator.currentTitle,
+                title: "10-Band Graphic Equalizer",
+                subtitle: "Digital Signal Processing • 32Hz – 16kHz",
                 onDismiss: { coordinator.dismissAuxiliary() }
             )
         case .chapters:

@@ -42,7 +42,7 @@ public struct AKIconProvider: Sendable, Equatable {
         subtitles: String = "captions.bubble.fill",
         audioTracks: String = "waveform.badge.magnifyingglass",
         equalizer: String = "slider.vertical.3",
-        chapters: String = "bookmark.fill",
+        chapters: String = "list.bullet.indent",
         sleepTimer: String = "timer",
         volumeMute: String = "speaker.slash.fill",
         volumeLow: String = "speaker.wave.1.fill",

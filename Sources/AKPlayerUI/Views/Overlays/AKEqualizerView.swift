@@ -23,8 +23,8 @@ public struct AKEqualizerView: View {
         palette: AKColorPalette = .standard,
         typography: AKTypography = .standard,
         placementMode: AKOverlayPlacementMode = .sheet,
-        title: String = "Graphic Equalizer",
-        subtitle: String? = "10-Band DSP Audio Equalizer • 32Hz – 16kHz",
+        title: String = "10-Band Graphic Equalizer",
+        subtitle: String? = "Digital Signal Processing • 32Hz – 16kHz",
         onDismiss: (() -> Void)? = nil
     ) {
         self.equalizer = equalizer
@@ -54,6 +54,10 @@ public struct AKEqualizerView: View {
                 GeometryReader { contentGeo in
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: AKSpacing.md) {
+                            if placementMode == .inline {
+                                inlineControlBar
+                            }
+
                             // Dynamic Cubic Spline Frequency Response Curve
                             frequencyResponseCurve
 
@@ -76,6 +80,32 @@ public struct AKEqualizerView: View {
     }
 
     // MARK: - Subviews
+
+    private var inlineControlBar: some View {
+        HStack(alignment: .center, spacing: AKSpacing.sm) {
+            HStack(spacing: AKSpacing.xs) {
+                Circle()
+                    .fill(equalizer.isEnabled ? palette.accent : Color.gray.opacity(0.5))
+                    .frame(width: 8, height: 8)
+
+                Text(title)
+                    .font(typography.subheadline.weight(.semibold))
+                    .foregroundColor(palette.foregroundPrimary)
+
+                Text(equalizer.isEnabled ? "Active" : "Bypassed")
+                    .font(typography.caption2)
+                    .foregroundColor(palette.foregroundSecondary)
+            }
+
+            Spacer()
+
+            Toggle("", isOn: $equalizer.isEnabled)
+                .labelsHidden()
+                .tint(palette.accent)
+        }
+        .padding(.horizontal, AKSpacing.md)
+        .padding(.vertical, AKSpacing.xxs)
+    }
 
     private var frequencyResponseCurve: some View {
         ZStack {
@@ -122,6 +152,7 @@ public struct AKEqualizerView: View {
                             .padding(.vertical, AKSpacing.xs)
                             .background(
                                 Capsule()
+                                 
                                     .fill(equalizer.activePreset == preset ? Color.white : Color.white.opacity(0.12))
                             )
                     }
