@@ -13,24 +13,27 @@ import AKPlayer
 /// 3. `.sideDrawer`: Elevated slide-in frosted glass drawer panel.
 public struct AKAudioPlayerView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
+    @ObservedObject public var uiState: AKPlayerUIState
     public var theme: AKPlayerTheme
 
     @State private var isFavorite: Bool = false
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
+        uiState: AKPlayerUIState? = nil,
         theme: AKPlayerTheme = .standard
     ) {
         self.coordinator = coordinator
+        self.uiState = uiState ?? coordinator.uiState
         self.theme = theme
     }
 
     private var isInlineActive: Bool {
-        coordinator.overlayPlacement == .inline && coordinator.activeInlineOverlay != nil
+        uiState.isInlineActive(isAudioOnly: true)
     }
 
     private var isDrawerActive: Bool {
-        coordinator.overlayPlacement == .sideDrawer && coordinator.activeInlineOverlay != nil
+        uiState.isDrawerActive
     }
 
     public var body: some View {
@@ -40,7 +43,7 @@ public struct AKAudioPlayerView: View {
 
             // 2. Main Player Surface
             VStack(spacing: AKSpacing.zero) {
-                if isInlineActive, let activeOverlay = coordinator.activeInlineOverlay {
+                if isInlineActive, let activeOverlay = uiState.activeInlineOverlay {
                     // INLINE SPLIT MODE: Sticky Top Playback Bar + Lower Content
                     inlineTopPlaybackBar
                         .padding(.horizontal, AKSpacing.lg)
@@ -86,7 +89,7 @@ public struct AKAudioPlayerView: View {
             }
 
             // 3. SIDE DRAWER MODE: Slide-in Floating Frosted Glass Panel
-            if isDrawerActive, let activeOverlay = coordinator.activeInlineOverlay {
+            if isDrawerActive, let activeOverlay = uiState.activeInlineOverlay {
                 // Dimmed Backdrop
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
@@ -108,8 +111,8 @@ public struct AKAudioPlayerView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .animation(.spring(response: 0.38, dampingFraction: 0.82), value: coordinator.activeInlineOverlay)
-        .sheet(item: $coordinator.activeSheet) { sheet in
+        .animation(.spring(response: 0.38, dampingFraction: 0.82), value: uiState.activeInlineOverlay)
+        .sheet(item: $uiState.activeSheet) { sheet in
             auxiliaryOverlayView(for: sheet, placement: .sheet)
                 .presentationDetents([.fraction(0.68), .large])
                 .presentationDragIndicator(.visible)
@@ -184,10 +187,10 @@ public struct AKAudioPlayerView: View {
             Menu {
                 Section("Overlay Placement Mode") {
                     ForEach(AKOverlayPlacementMode.allCases) { mode in
-                        Button(action: { coordinator.overlayPlacement = mode }) {
+                        Button(action: { uiState.overlayPlacement = mode }) {
                             HStack {
                                 Text(mode.rawValue)
-                                if coordinator.overlayPlacement == mode {
+                                if uiState.overlayPlacement == mode {
                                     Image(systemName: "checkmark")
                                 }
                             }
@@ -196,16 +199,16 @@ public struct AKAudioPlayerView: View {
                 }
 
                 Section("Tools") {
-                    Button(action: { coordinator.presentSheet(.equalizer) }) {
+                    Button(action: { uiState.presentSheet(.equalizer) }) {
                         Label("Equalizer & DSP", systemImage: "slider.vertical.3")
                     }
-                    Button(action: { coordinator.presentSheet(.chapters) }) {
+                    Button(action: { uiState.presentSheet(.chapters) }) {
                         Label("Chapters", systemImage: "list.bullet.indent")
                     }
-                    Button(action: { coordinator.presentSheet(.queue) }) {
+                    Button(action: { uiState.presentSheet(.queue) }) {
                         Label("Queue", systemImage: "list.star")
                     }
-                    Button(action: { coordinator.presentSheet(.trackSelection) }) {
+                    Button(action: { uiState.presentSheet(.trackSelection) }) {
                         Label("Audio & Subtitles", systemImage: "waveform.badge.magnifyingglass")
                     }
                 }
@@ -292,7 +295,7 @@ public struct AKAudioPlayerView: View {
                     .buttonStyle(.plain)
 
                     // Return to Hero Artwork (Collapse Inline)
-                    Button(action: { coordinator.dismissAuxiliary() }) {
+                    Button(action: { uiState.dismissAuxiliary() }) {
                         Image(systemName: "arrow.down.right.and.arrow.up.left")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white.opacity(0.8))
@@ -519,14 +522,14 @@ public struct AKAudioPlayerView: View {
             // Placement Mode Selector Pill
             Menu {
                 ForEach(AKOverlayPlacementMode.allCases) { mode in
-                    Button(action: { coordinator.overlayPlacement = mode }) {
+                    Button(action: { uiState.overlayPlacement = mode }) {
                         Label(mode.rawValue, systemImage: mode.iconName)
                     }
                 }
             } label: {
                 HStack(spacing: AKSpacing.xxs) {
-                    Image(systemName: coordinator.overlayPlacement.iconName)
-                    Text(coordinator.overlayPlacement.rawValue)
+                    Image(systemName: uiState.overlayPlacement.iconName)
+                    Text(uiState.overlayPlacement.rawValue)
                 }
                 .font(theme.typography.caption2.weight(.semibold))
                 .foregroundColor(.white.opacity(0.8))
@@ -552,10 +555,10 @@ public struct AKAudioPlayerView: View {
     }
 
     private func auxiliaryButton(sheet: AKPlayerAuxiliarySheet, icon: String, label: String) -> some View {
-        let isSelected = coordinator.activeInlineOverlay == sheet || coordinator.activeSheet == sheet
+        let isSelected = uiState.activeInlineOverlay == sheet || uiState.activeSheet == sheet
 
         return Button(action: {
-            coordinator.toggleAuxiliary(sheet)
+            uiState.toggle(sheet, isAudioOnly: true)
         }) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
@@ -580,7 +583,7 @@ public struct AKAudioPlayerView: View {
                 palette: theme.palette,
                 typography: theme.typography,
                 placementMode: placement,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .chapters:
             AKChapterSheet(
@@ -588,7 +591,7 @@ public struct AKAudioPlayerView: View {
                 palette: theme.palette,
                 typography: theme.typography,
                 placementMode: placement,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .queue:
             AKQueueSheet(
@@ -596,7 +599,7 @@ public struct AKAudioPlayerView: View {
                 palette: theme.palette,
                 typography: theme.typography,
                 placementMode: placement,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .equalizer:
             AKEqualizerView(
@@ -606,7 +609,7 @@ public struct AKAudioPlayerView: View {
                 placementMode: placement,
                 title: "10-Band Graphic Equalizer",
                 subtitle: "Digital Signal Processing • 32Hz – 16kHz",
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .trackSelection:
             AKTrackSelectorSheet(
@@ -614,7 +617,7 @@ public struct AKAudioPlayerView: View {
                 palette: theme.palette,
                 typography: theme.typography,
                 placementMode: placement,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .details:
             AKEqualizerView(
@@ -624,7 +627,7 @@ public struct AKAudioPlayerView: View {
                 placementMode: placement,
                 title: "Audio Details",
                 subtitle: coordinator.currentTitle,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         }
     }

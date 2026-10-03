@@ -22,11 +22,47 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
 
     // MARK: - Presentation & Navigation
     @Published public var presentationMode: AKPlayerPresentationMode = .hidden
-    @Published public var activeSheet: AKPlayerAuxiliarySheet? = nil
-    @Published public var overlayPlacement: AKOverlayPlacementMode = .inline
     @Published public var isAtLiveEdge: Bool = true
     @Published public var liveOffset: TimeInterval = 0
-    @Published public var activeInlineOverlay: AKPlayerAuxiliarySheet? = nil
+
+    // MARK: - Dedicated UI Presentation State (Separated into AKPlayerUIState)
+    public let uiState: AKPlayerUIState
+
+    public var activeSheet: AKPlayerAuxiliarySheet? {
+        get { uiState.activeSheet }
+        set { uiState.activeSheet = newValue }
+    }
+
+    public var overlayPlacement: AKOverlayPlacementMode {
+        get { uiState.overlayPlacement }
+        set { uiState.overlayPlacement = newValue }
+    }
+
+    public var activeInlineOverlay: AKPlayerAuxiliarySheet? {
+        get { uiState.activeInlineOverlay }
+        set { uiState.activeInlineOverlay = newValue }
+    }
+
+    public var activeSheetBinding: Binding<AKPlayerAuxiliarySheet?> {
+        Binding(
+            get: { self.uiState.activeSheet },
+            set: { self.uiState.activeSheet = $0 }
+        )
+    }
+
+    public var overlayPlacementBinding: Binding<AKOverlayPlacementMode> {
+        Binding(
+            get: { self.uiState.overlayPlacement },
+            set: { self.uiState.overlayPlacement = $0 }
+        )
+    }
+
+    public var activeInlineOverlayBinding: Binding<AKPlayerAuxiliarySheet?> {
+        Binding(
+            get: { self.uiState.activeInlineOverlay },
+            set: { self.uiState.activeInlineOverlay = $0 }
+        )
+    }
 
     // MARK: - Active Playback State (Driven by AKPlayer)
     @Published public private(set) var state: AKPlayerState = .idle
@@ -68,15 +104,18 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     public let equalizer: AKEqualizerManager
     public let adManager: AKAdManager
 
+    private var cancellables = Set<AnyCancellable>()
     private var interstitialTask: Task<Void, Never>?
 
     public override init() {
         self.player = AKPlayer()
         self.equalizer = AKEqualizerManager()
         self.adManager = AKAdManager()
+        self.uiState = AKPlayerUIState()
         super.init()
         self.player.delegate = self
         setupAdManagerCallbacks()
+        bindUIState()
     }
 
     /// Custom initializer supporting injected AKPlayer instances or testing.
@@ -84,9 +123,19 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         self.player = player
         self.equalizer = AKEqualizerManager()
         self.adManager = AKAdManager()
+        self.uiState = AKPlayerUIState()
         super.init()
         self.player.delegate = self
         setupAdManagerCallbacks()
+        bindUIState()
+    }
+
+    private func bindUIState() {
+        uiState.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
     }
 
     deinit {
@@ -282,56 +331,26 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         }
     }
 
-    /// Toggles an auxiliary interface (Lyrics, Chapters, Queue, Equalizer)
-    /// respecting the currently selected  mode.
+    // MARK: - Auxiliary UI Navigation Commands (Forwarded to AKPlayerUIState)
+
+    /// Toggles an auxiliary interface (Lyrics, Chapters, Queue, Equalizer) via uiState.
     public func toggleAuxiliary(_ sheet: AKPlayerAuxiliarySheet) {
-        switch overlayPlacement {
-        case .inline:
-            activeSheet = nil
-            withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
-                if activeInlineOverlay == sheet {
-                    activeInlineOverlay = nil
-                } else {
-                    activeInlineOverlay = sheet
-                }
-            }
-        case .sheet:
-            activeInlineOverlay = nil
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                if activeSheet == sheet {
-                    activeSheet = nil
-                } else {
-                    activeSheet = sheet
-                }
-            }
-        case .sideDrawer:
-            activeSheet = nil
-            withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
-                if activeInlineOverlay == sheet {
-                    activeInlineOverlay = nil
-                } else {
-                    activeInlineOverlay = sheet
-                }
-            }
-        }
+        uiState.toggle(sheet, isAudioOnly: isAudioOnly)
     }
 
-    /// Dismisses any active auxiliary overlay or sheet.
+    /// Dismisses any active auxiliary overlay or sheet via uiState.
     public func dismissAuxiliary() {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-            activeInlineOverlay = nil
-            activeSheet = nil
-        }
+        uiState.dismissAuxiliary()
     }
 
-    /// Presents an auxiliary sheet or activates the overlay according to .
+    /// Presents an auxiliary sheet or activates the overlay according to mode via uiState.
     public func presentSheet(_ sheet: AKPlayerAuxiliarySheet) {
-        toggleAuxiliary(sheet)
+        uiState.presentSheet(sheet, isAudioOnly: isAudioOnly)
     }
 
-    /// Dismisses any active auxiliary sheet or inline overlay.
+    /// Dismisses any active auxiliary sheet or inline overlay via uiState.
     public func dismissSheet() {
-        dismissAuxiliary()
+        uiState.dismissSheet()
     }
 
     // MARK: - Track Selection Commands (AKMediaTrackOption)

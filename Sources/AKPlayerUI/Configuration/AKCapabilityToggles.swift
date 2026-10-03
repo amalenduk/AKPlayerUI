@@ -66,7 +66,7 @@ public struct AKCapabilityToggles: Sendable, Equatable {
         showsSubtitlesButton: true,
         showsAudioTrackButton: true,
         showsAspectSelector: true,
-        showsEqualizer: false,
+        showsEqualizer: true,
         showsChapters: true,
         showsSleepTimer: false,
         showsLiveBadge: false

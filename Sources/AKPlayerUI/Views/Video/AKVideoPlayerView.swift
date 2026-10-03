@@ -10,6 +10,7 @@ import AKPlayer
 /// capability-driven controls, and native ad overlays.
 public struct AKVideoPlayerView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
+    @ObservedObject public var uiState: AKPlayerUIState
     public let theme: AKPlayerTheme
 
     @State private var isHUDVisible: Bool = true
@@ -17,10 +18,16 @@ public struct AKVideoPlayerView: View {
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
+        uiState: AKPlayerUIState? = nil,
         theme: AKPlayerTheme = .standard
     ) {
         self.coordinator = coordinator
+        self.uiState = uiState ?? coordinator.uiState
         self.theme = theme
+    }
+
+    private var isDrawerActive: Bool {
+        uiState.isDrawerActive
     }
 
     public var body: some View {
@@ -78,12 +85,35 @@ public struct AKVideoPlayerView: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
+
+            // 5. Side Drawer Mode: Slide-in Floating Frosted Glass Panel
+            if isDrawerActive, let activeOverlay = uiState.activeInlineOverlay {
+                // Dimmed Backdrop
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        coordinator.dismissAuxiliary()
+                    }
+                    .transition(.opacity)
+
+                // Trailing Drawer Panel (Restricted to safe area height - non-full-screen)
+                GeometryReader { geo in
+                    HStack(spacing: 0) {
+                        Spacer()
+
+                        sheetView(for: activeOverlay, placement: .sideDrawer)
+                            .frame(width: min(geo.size.width * 0.88, 380))
+                    }
+                }
+                .transition(.move(edge: .trailing))
+            }
         }
+        .animation(.spring(response: 0.38, dampingFraction: 0.82), value: uiState.activeInlineOverlay)
         .onAppear {
             resetHUDTimer()
         }
-        .sheet(item: $coordinator.activeSheet) { sheet in
-            sheetView(for: sheet)
+        .sheet(item: $uiState.activeSheet) { sheet in
+            sheetView(for: sheet, placement: .sheet)
                 .presentationDetents([.fraction(0.68), .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.96))
@@ -127,15 +157,15 @@ public struct AKVideoPlayerView: View {
             HStack(spacing: AKSpacing.sm) {
                 // Equalizer Sheet Trigger
                 if coordinator.configuration.capabilities.showsEqualizer {
-                    toolButton(icon: "slider.vertical.3") {
-                        coordinator.presentSheet(.equalizer)
+                    toolButton(icon: theme.icons.equalizer) {
+                        uiState.presentSheet(.equalizer, isAudioOnly: coordinator.isAudioOnly)
                     }
                 }
 
                 // Chapters Sheet Trigger
                 if coordinator.configuration.capabilities.showsChapters && !coordinator.chapters.isEmpty {
                     toolButton(icon: theme.icons.chapters) {
-                        coordinator.presentSheet(.chapters)
+                        uiState.presentSheet(.chapters, isAudioOnly: coordinator.isAudioOnly)
                     }
                 }
 
@@ -282,59 +312,59 @@ public struct AKVideoPlayerView: View {
     }
 
     @ViewBuilder
-    private func sheetView(for sheet: AKPlayerAuxiliarySheet) -> some View {
+    private func sheetView(for sheet: AKPlayerAuxiliarySheet, placement: AKOverlayPlacementMode = .sheet) -> some View {
         switch sheet {
         case .equalizer:
             AKEqualizerView(
                 equalizer: coordinator.equalizer,
                 palette: theme.palette,
                 typography: theme.typography,
-                placementMode: .sheet,
+                placementMode: placement,
                 title: "10-Band Graphic Equalizer",
                 subtitle: "Digital Signal Processing • 32Hz – 16kHz",
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .chapters:
             AKChapterSheet(
                 coordinator: coordinator,
                 palette: theme.palette,
                 typography: theme.typography,
-                placementMode: .sheet,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                placementMode: placement,
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .lyrics:
             AKLyricsView(
                 coordinator: coordinator,
                 palette: theme.palette,
                 typography: theme.typography,
-                placementMode: .sheet,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                placementMode: placement,
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .queue:
             AKQueueSheet(
                 coordinator: coordinator,
                 palette: theme.palette,
                 typography: theme.typography,
-                placementMode: .sheet,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                placementMode: placement,
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .trackSelection:
             AKTrackSelectorSheet(
                 coordinator: coordinator,
                 palette: theme.palette,
                 typography: theme.typography,
-                placementMode: .sheet,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                placementMode: placement,
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .details:
             AKEqualizerView(
                 equalizer: coordinator.equalizer,
                 palette: theme.palette,
                 typography: theme.typography,
-                placementMode: .sheet,
+                placementMode: placement,
                 title: "Media Details",
                 subtitle: coordinator.currentTitle,
-                onDismiss: { coordinator.dismissAuxiliary() }
+                onDismiss: { uiState.dismissAuxiliary() }
             )
         }
     }
@@ -358,7 +388,7 @@ public struct AKVideoPlayerView: View {
             try? await Task.sleep(nanoseconds: 4_000_000_000)
             guard !Task.isCancelled else { return }
             await MainActor.run {
-                if coordinator.isPlaying {
+                if coordinator.isPlaying && uiState.activeSheet == nil && uiState.activeInlineOverlay == nil {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         isHUDVisible = false
                     }
