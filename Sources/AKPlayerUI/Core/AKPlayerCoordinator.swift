@@ -156,6 +156,10 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         if let config = configuration {
             self.configuration = config
         }
+        
+        Task {
+            try? await self.player.prepare()
+        }
 
         self.currentMedia = media
         self.currentTitle = media.staticMetadata?.title ?? media.url.deletingPathExtension().lastPathComponent

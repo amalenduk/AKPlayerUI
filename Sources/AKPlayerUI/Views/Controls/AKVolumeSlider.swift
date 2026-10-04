@@ -50,7 +50,7 @@ public struct AKVolumeSlider: View {
                         .frame(width: isCompact ? 6 : 8)
                     
                     Capsule()
-                        .fill(theme.palette.accent)
+                        .fill(theme.palette.playerActionButtons)
                         .frame(width: isCompact ? 6 : 8, height: max(0, h * CGFloat(volume)))
                 }
                 .frame(maxWidth: .infinity)
@@ -59,7 +59,7 @@ public struct AKVolumeSlider: View {
             
             Text("\(Int(volume * 100))%")
                 .font(theme.typography.badgeSmall)
-                .foregroundColor(theme.palette.accent.opacity(0.8))
+                .foregroundColor(theme.palette.playerActionButtons.opacity(0.8))
         }
         .frame(width: isCompact ? 100 : 140)
         .padding(.vertical, AKSpacing.sm)

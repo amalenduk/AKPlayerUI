@@ -10,11 +10,11 @@ import AKPlayer
 /// Automatically routes between Video and Audio UI layouts based on the active media characteristics.
 public struct AKPlayerContainerView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
-
+    
     public init(coordinator: AKPlayerCoordinator = .shared) {
         self.coordinator = coordinator
     }
-
+    
     public var body: some View {
         ZStack(alignment: .bottom) {
             // Fullscreen Player Overlay
@@ -41,7 +41,7 @@ public struct AKPlayerContainerView: View {
                     .zIndex(2)
                 }
             }
-
+            
             // Docked Mini Player Bar
             if coordinator.presentationMode == .miniPlayer {
                 if coordinator.isAudioOnly {
@@ -54,9 +54,9 @@ public struct AKPlayerContainerView: View {
                     .zIndex(1)
                 } else {
                     AKVideoMiniPlayerView(
-                        coordinator: coordinator,
-                        palette: coordinator.theme.palette,
-                        typography: coordinator.theme.typography
+                        player: coordinator.player,
+                        onExpand: { coordinator.expand() },
+                        onDismiss: { coordinator.dismiss() }
                     )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .padding(.bottom, AKSpacing.xs)

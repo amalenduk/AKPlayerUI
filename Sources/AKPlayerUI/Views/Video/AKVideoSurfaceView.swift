@@ -14,12 +14,12 @@ import UIKit
 public struct AKVideoSurfaceView: UIViewRepresentable {
     public let player: AKPlayer
     public let aspectRatio: AKVideoAspectRatio
-
+    
     public init(player: AKPlayer, aspectRatio: AKVideoAspectRatio = .fit) {
         self.player = player
         self.aspectRatio = aspectRatio
     }
-
+    
     public func makeUIView(context: Context) -> AKPlayerView {
         let view = AKPlayerView()
         view.player = player.player
@@ -27,7 +27,7 @@ public struct AKVideoSurfaceView: UIViewRepresentable {
         view.setVideoFillMode(aspectRatio.videoGravity.rawValue)
         return view
     }
-
+    
     public func updateUIView(_ uiView: AKPlayerView, context: Context) {
         if uiView.player !== player.player {
             uiView.player = player.player
@@ -43,19 +43,19 @@ import AppKit
 public struct AKVideoSurfaceView: NSViewRepresentable {
     public let player: AKPlayer
     public let aspectRatio: AKVideoAspectRatio
-
+    
     public init(player: AKPlayer, aspectRatio: AKVideoAspectRatio = .fit) {
         self.player = player
         self.aspectRatio = aspectRatio
     }
-
+    
     public func makeNSView(context: Context) -> AKPlayerView {
         let view = AKPlayerView(frame: .zero)
         view.player = player.player
         view.setVideoFillMode(aspectRatio.videoGravity.rawValue)
         return view
     }
-
+    
     public func updateNSView(_ nsView: AKPlayerView, context: Context) {
         if nsView.player !== player.player {
             nsView.player = player.player

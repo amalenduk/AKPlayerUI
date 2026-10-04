@@ -21,7 +21,7 @@ public struct AKCapabilityToggles: Sendable, Equatable {
     public var showsChapters: Bool
     public var showsSleepTimer: Bool
     public var showsLiveBadge: Bool
-
+    
     public init(
         showsPlayPause: Bool = true,
         showsScrubber: Bool = true,
@@ -53,7 +53,7 @@ public struct AKCapabilityToggles: Sendable, Equatable {
         self.showsSleepTimer = showsSleepTimer
         self.showsLiveBadge = showsLiveBadge
     }
-
+    
     /// Default profile for on-demand video playback.
     public static let video = AKCapabilityToggles(
         showsPlayPause: true,
@@ -71,7 +71,7 @@ public struct AKCapabilityToggles: Sendable, Equatable {
         showsSleepTimer: false,
         showsLiveBadge: false
     )
-
+    
     /// Default profile for audio/music playback.
     public static let audio = AKCapabilityToggles(
         showsPlayPause: true,
@@ -89,7 +89,7 @@ public struct AKCapabilityToggles: Sendable, Equatable {
         showsSleepTimer: true,
         showsLiveBadge: false
     )
-
+    
     /// Default profile for live broadcast streams.
     public static let liveStream = AKCapabilityToggles(
         showsPlayPause: true,
@@ -107,7 +107,7 @@ public struct AKCapabilityToggles: Sendable, Equatable {
         showsSleepTimer: false,
         showsLiveBadge: true
     )
-
+    
     /// Default profile for podcast and spoken-word audio.
     public static let podcast = AKCapabilityToggles(
         showsPlayPause: true,
