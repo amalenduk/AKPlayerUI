@@ -11,6 +11,7 @@ public enum AKSeekDirection: Sendable {
 }
 
 /// Single Responsibility: Displays directional seek button with numerical badge offset, emitting seek action.
+/// Styled consistently with `AKControlButtonStyle` driven directly by `theme.buttonStyle`.
 public struct AKSeekButton: View {
     public let direction: AKSeekDirection
     public let stepSeconds: TimeInterval
@@ -32,7 +33,6 @@ public struct AKSeekButton: View {
         stepSeconds: TimeInterval = 10,
         isEnabled: Bool = true,
         size: CGFloat = 44,
-        foregroundColor: Color = .white,
         onSeek: @escaping () -> Void
     ) {
         self.direction = direction
@@ -54,23 +54,16 @@ public struct AKSeekButton: View {
     
     public var body: some View {
         Button(action: onSeek) {
-            ZStack {
-                Circle()
-                    .fill(theme.palette.playerActionBackgroundButtons)
-                    .frame(width: size, height: size)
-                
-                Image(systemName: iconName)
-                    .font(.system(size: size * 0.45, weight: .semibold))
-                    .foregroundColor(theme.palette.playerActionButtons)
-            }
+            Image(systemName: iconName)
+                .font(.system(size: size * 0.45, weight: .semibold))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(AKControlButtonStyle(size: size))
         .disabled(!isEnabled)
-        .opacity(isEnabled ? 1.0 : 0.4)
     }
 }
 
 // MARK: - Previews
+
 #Preview("Seek Buttons") {
     ZStack {
         Color.black.ignoresSafeArea()
@@ -79,5 +72,6 @@ public struct AKSeekButton: View {
             AKSeekButton(direction: .forward, stepSeconds: 15, onSeek: {})
             AKSeekButton(direction: .forward, stepSeconds: 30, isEnabled: false, onSeek: {})
         }
+        .environment(\.akPlayerTheme, .standard)
     }
 }

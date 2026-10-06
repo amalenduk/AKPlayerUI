@@ -206,7 +206,9 @@ public struct AKVideoPlayerView: View {
             }
             
             // Play / Pause Central Button
-            AKPlayPauseButton(player: coordinator.player)
+            AKPlayPauseButton(state: coordinator.state, autoPlay: coordinator.autoPlay) {
+                coordinator.player.togglePlayPause()
+            }
             
             // Skip Forward
             if coordinator.configuration.capabilities.showsSkipButtons {

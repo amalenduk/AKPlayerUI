@@ -479,17 +479,15 @@ public struct AKAudioPlayerView: View {
             AKSeekButton(
                 direction: .backward,
                 stepSeconds: coordinator.configuration.playback.skipBackwardDuration,
-                foregroundColor: theme.palette.foregroundPrimary,
                 onSeek: { coordinator.skipBackward() }
             )
 
             Spacer()
 
             // Play / Pause Central Button (Autonomous AKPlayer binding)
-            AKPlayPauseButton(
-                player: coordinator.player,
-                size: 68
-            )
+            AKPlayPauseButton(state: coordinator.state, autoPlay: coordinator.autoPlay) {
+                coordinator.player.togglePlayPause()
+            }
 
             Spacer()
 
@@ -497,7 +495,6 @@ public struct AKAudioPlayerView: View {
             AKSeekButton(
                 direction: .forward,
                 stepSeconds: coordinator.configuration.playback.skipForwardDuration,
-                foregroundColor: theme.palette.foregroundPrimary,
                 onSeek: { coordinator.skipForward() }
             )
 

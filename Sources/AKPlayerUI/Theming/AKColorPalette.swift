@@ -7,7 +7,7 @@ import SwiftUI
 
 /// Semantic color tokens for the player interface and ad states.
 public struct AKColorPalette: Sendable, Equatable {
-    /// Active interactive accent color (default: vibrant Cyan/Blue).
+    /// Active interactive accent color (default: vibrant Electric Blue).
     public var accent: Color
 
     /// Inactive background timeline rail color.
@@ -34,9 +34,10 @@ public struct AKColorPalette: Sendable, Equatable {
     /// Ultra-subtle border stroke color for glass elements.
     public var glassBorder: Color
 
-    /// Background / fill color for play action buttons.
+    /// Foreground or accent highlight color for play action buttons (defaults to accent).
     public var playerActionButtons: Color
     
+    /// Background fill color for player action buttons (defaults to glass).
     public var playerActionBackgroundButtons: Color
 
     // MARK: - Aliases for Foreground Hierarchy
@@ -54,8 +55,8 @@ public struct AKColorPalette: Sendable, Equatable {
         textSecondary: Color = Color.white.opacity(0.7),
         hudBackground: Color = Color.black.opacity(0.4),
         glassBorder: Color = Color.white.opacity(0.15),
-        playActionButtons: Color = Color.yellow,
-        playerActionBackgroundButtons: Color = Color.white.opacity(0.18)
+        playActionButtons: Color? = nil,
+        playerActionBackgroundButtons: Color? = nil
     ) {
         self.accent = accent
         self.progressRailRemaining = progressRailRemaining
@@ -66,8 +67,8 @@ public struct AKColorPalette: Sendable, Equatable {
         self.textSecondary = textSecondary
         self.hudBackground = hudBackground
         self.glassBorder = glassBorder
-        self.playerActionButtons = playActionButtons
-        self.playerActionBackgroundButtons = playerActionBackgroundButtons
+        self.playerActionButtons = playActionButtons ?? accent
+        self.playerActionBackgroundButtons = playerActionBackgroundButtons ?? Color.white.opacity(0.18)
     }
 
     public static let standard = AKColorPalette()
@@ -76,7 +77,7 @@ public struct AKColorPalette: Sendable, Equatable {
         accent: Color(red: 0.85, green: 0.15, blue: 0.95), // Neon Purple/Pink
         adBreakIndicator: Color(red: 1.0, green: 0.84, blue: 0.0),
         adActiveProgress: Color(red: 1.0, green: 0.45, blue: 0.1),
-        playActionButtons: Color.yellow
+        playActionButtons: Color(red: 0.85, green: 0.15, blue: 0.95)
     )
 
     public static let highContrast = AKColorPalette(

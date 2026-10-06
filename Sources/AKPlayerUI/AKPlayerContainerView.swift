@@ -54,7 +54,7 @@ public struct AKPlayerContainerView: View {
                     .zIndex(1)
                 } else {
                     AKVideoMiniPlayerView(
-                        player: coordinator.player,
+                        coordinator: coordinator,
                         onExpand: { coordinator.expand() },
                         onDismiss: { coordinator.dismiss() }
                     )

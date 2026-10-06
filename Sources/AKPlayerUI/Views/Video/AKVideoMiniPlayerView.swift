@@ -10,6 +10,7 @@ import AKPlayer
 /// Standardized height (~58pt), comfortable touch targets, continuous corner clipping, and live stream awareness.
 /// Driven directly by `AKPlayer` with an expand callback for host navigation.
 public struct AKVideoMiniPlayerView: View {
+    @ObservedObject public var coordinator: AKPlayerCoordinator
     public let player: AKPlayer
     public let onExpand: () -> Void
     public var onDismiss: (() -> Void)?
@@ -22,11 +23,12 @@ public struct AKVideoMiniPlayerView: View {
     @Environment(\.akPlayerTheme) private var theme
     
     public init(
-        player: AKPlayer,
+        coordinator: AKPlayerCoordinator,
         onExpand: @escaping () -> Void,
         onDismiss: (() -> Void)? = nil
     ) {
-        self.player = player
+        self.coordinator = coordinator
+        self.player = coordinator.player
         self.onExpand = onExpand
         self.onDismiss = onDismiss
         self._currentMedia = State(initialValue: player.currentMedia)
@@ -114,7 +116,9 @@ public struct AKVideoMiniPlayerView: View {
                 }
                 
                 // Quick Play/Pause Action
-                AKPlayPauseButton(player: player, size: 36)
+                AKPlayPauseButton(state: player.state, autoPlay: player.autoPlay) {
+                    player.togglePlayPause()
+                }
                 
                 // Dismiss / Close Button
                 if let onDismiss {
@@ -200,7 +204,7 @@ public struct AKVideoMiniPlayerView: View {
     ZStack(alignment: .bottom) {
         Color.gray.opacity(0.3).ignoresSafeArea()
         AKVideoMiniPlayerView(
-            player: AKPlayer(),
+            coordinator: AKPlayerCoordinator(),
             onExpand: {},
             onDismiss: {}
         )

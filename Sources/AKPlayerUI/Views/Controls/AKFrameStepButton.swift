@@ -11,6 +11,7 @@ public enum AKStepDirection: Sendable {
 }
 
 /// Single Responsibility: Displays single-frame stepping control querying media capabilities.
+/// Styled consistently with `AKControlButtonStyle` driven directly by `theme.buttonStyle`.
 public struct AKFrameStepButton: View {
     public let direction: AKStepDirection
     public let isEnabled: Bool
@@ -40,23 +41,16 @@ public struct AKFrameStepButton: View {
     
     public var body: some View {
         Button(action: onStep) {
-            ZStack {
-                Circle()
-                    .fill(theme.palette.playerActionBackgroundButtons)
-                    .frame(width: size, height: size)
-                
-                Image(systemName: iconName)
-                    .font(.system(size: size * 0.42, weight: .regular))
-                    .foregroundColor(theme.palette.playerActionButtons)
-            }
+            Image(systemName: iconName)
+                .font(.system(size: size * 0.42, weight: .regular))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(AKControlButtonStyle(size: size))
         .disabled(!isEnabled)
-        .opacity(isEnabled ? 1.0 : 0.35)
     }
 }
 
 // MARK: - Previews
+
 #Preview("Frame Step Buttons") {
     ZStack {
         Color.black.ignoresSafeArea()
@@ -65,5 +59,6 @@ public struct AKFrameStepButton: View {
             AKFrameStepButton(direction: .forward, isEnabled: true, onStep: {})
             AKFrameStepButton(direction: .forward, isEnabled: false, onStep: {})
         }
+        .environment(\.akPlayerTheme, .standard)
     }
 }

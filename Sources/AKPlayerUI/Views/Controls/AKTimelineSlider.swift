@@ -20,15 +20,15 @@ public struct AKTimelineSlider: View {
     public let liveOffset: TimeInterval
     public let palette: AKColorPalette
     public let typography: AKTypography
-
+    
     public let onJumpToLive: (() -> Void)?
     public let onScrubBegan: (() -> Void)?
     public let onScrubChanged: ((TimeInterval) -> Void)?
     public let onScrubEnded: ((TimeInterval) -> Void)?
-
+    
     @State private var isDragging: Bool = false
     @State private var dragPosition: Double = 0.0
-
+    
     public init(
         currentTime: TimeInterval,
         duration: TimeInterval,
@@ -62,7 +62,7 @@ public struct AKTimelineSlider: View {
         self.onScrubChanged = onScrubChanged
         self.onScrubEnded = onScrubEnded
     }
-
+    
     private var activeProgress: Double {
         if isDragging {
             return dragPosition
@@ -79,7 +79,7 @@ public struct AKTimelineSlider: View {
         guard duration > 0 else { return 0 }
         return max(0, min(1.0, currentTime / duration))
     }
-
+    
     private var bufferedProgress: Double {
         if isLive {
             return 1.0
@@ -87,21 +87,21 @@ public struct AKTimelineSlider: View {
         guard duration > 0 else { return 0 }
         return max(0, min(1.0, bufferedTime / duration))
     }
-
+    
     private var displayTime: TimeInterval {
         if isDragging {
             return dragPosition * duration
         }
         return currentTime
     }
-
+    
     private var effectiveLiveEdge: Bool {
         if isDragging {
             return dragPosition >= 0.96
         }
         return isAtLiveEdge
     }
-
+    
     private var currentLiveOffset: TimeInterval {
         if isDragging {
             guard duration > 0 else { return 0 }
@@ -109,7 +109,7 @@ public struct AKTimelineSlider: View {
         }
         return liveOffset
     }
-
+    
     public var body: some View {
         VStack(spacing: AKSpacing.xxs) {
             if isLive && !isSeekEnabled {
@@ -119,29 +119,29 @@ public struct AKTimelineSlider: View {
                 // Seekable Track (VOD or Live DVR)
                 scrubberTrack
             }
-
+            
             // Labels Row
             labelsRow
         }
     }
-
+    
     // MARK: - Scrubber Track
-
+    
     private var scrubberTrack: some View {
         GeometryReader { geometry in
             let trackWidth = geometry.size.width
-
+            
             ZStack(alignment: .leading) {
                 // Background Rail
                 Capsule()
                     .fill(palette.progressRailRemaining)
                     .frame(height: isDragging ? 6 : 4)
-
+                
                 // Buffered Progress Bar
                 Capsule()
                     .fill(palette.progressRailBuffered)
                     .frame(width: max(0, trackWidth * CGFloat(bufferedProgress)), height: isDragging ? 6 : 4)
-
+                
                 // Active Played Progress Bar
                 Capsule()
                     .fill(
@@ -149,7 +149,7 @@ public struct AKTimelineSlider: View {
                             (isLive ? Color.red : palette.accent)
                     )
                     .frame(width: max(0, trackWidth * CGFloat(activeProgress)), height: isDragging ? 6 : 4)
-
+                
                 // Ad Cue Points
                 if !isAdActive && !isLive && duration > 0 {
                     ForEach(cuePoints, id: \.self) { cueTime in
@@ -160,7 +160,7 @@ public struct AKTimelineSlider: View {
                             .offset(x: max(0, trackWidth * CGFloat(ratio) - 2.5))
                     }
                 }
-
+                
                 // Scrubber Thumb Handle
                 if isSeekEnabled && !isAdActive {
                     Circle()
@@ -214,44 +214,43 @@ public struct AKTimelineSlider: View {
         }
         .frame(height: 20)
     }
-
+    
     // MARK: - Pure Live Ribbon (No Scrubbing)
     private var pureLiveRibbon: some View {
         HStack(spacing: AKSpacing.xs) {
             Circle()
                 .fill(Color.red)
                 .frame(width: 8, height: 8)
-
+            
             Text("BROADCASTING LIVE")
                 .font(typography.badge)
                 .foregroundColor(.white)
-
+            
             Spacer()
-
+            
             Text("Real-Time Feed")
                 .font(typography.caption2)
                 .foregroundColor(palette.textSecondary)
         }
         .frame(height: 20)
     }
-
+    
     // MARK: - Labels Row
     private var labelsRow: some View {
         HStack {
             if isLive {
                 if isSeekEnabled {
                     // DVR Live stream: left side shows stream elapsed or current position
-                    Text(effectiveLiveEdge ? "LIVE BROADCAST" : "-\(formatOffset(currentLiveOffset))")
+                    Text(effectiveLiveEdge ? "LIVE BROADCAST" : "-\(currentLiveOffset.humanReadableClock)")
                         .font(typography.timecodeSmall)
                         .foregroundColor(effectiveLiveEdge ? palette.textSecondary : palette.accent)
-
+                    
                     Spacer()
-
+                    
                     // Right side shows interactive live badge / Go To Live button
                     AKLiveBadgeView(
                         isAtLiveEdge: effectiveLiveEdge,
-                        offsetSeconds: currentLiveOffset,
-                        typography: typography,
+                        liveDrift: currentLiveOffset,
                         onJumpToLive: {
                             onJumpToLive?()
                         }
@@ -261,43 +260,22 @@ public struct AKTimelineSlider: View {
                 }
             } else {
                 // Standard VOD
-                Text(formatTime(displayTime))
+                Text(displayTime.humanReadableClock)
                     .font(typography.timecodeSmall)
                     .foregroundColor(palette.textSecondary)
-
+                
                 Spacer()
-
+                
                 if isAdActive {
                     Text("Ad Break • Scrubbing Locked")
                         .font(typography.badge)
                         .foregroundColor(palette.adActiveProgress)
                 } else if duration > 0 {
-                    Text("-\(formatTime(max(0, duration - displayTime)))")
+                    Text("-\(max(0, duration - displayTime).humanReadableClock)")
                         .font(typography.timecodeSmall)
                         .foregroundColor(palette.textSecondary)
                 }
             }
         }
-    }
-
-    private func formatTime(_ time: TimeInterval) -> String {
-        guard !time.isNaN && !time.isInfinite && time >= 0 else { return "0:00" }
-        let totalSeconds = Int(time)
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-
-        if hours > 0 {
-            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            return String(format: "%d:%02d", minutes, seconds)
-        }
-    }
-
-    private func formatOffset(_ seconds: TimeInterval) -> String {
-        let absSec = Int(abs(seconds))
-        let m = absSec / 60
-        let s = absSec % 60
-        return String(format: "%d:%02d", m, s)
     }
 }

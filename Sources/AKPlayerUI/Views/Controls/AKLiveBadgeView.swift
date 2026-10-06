@@ -4,28 +4,28 @@
 //
 
 import SwiftUI
+import AKPlayer
 
 /// Single Responsibility: Displays pulsating live broadcast badge or DVR time offset pill.
 public struct AKLiveBadgeView: View {
     public let isAtLiveEdge: Bool
-    public let offsetSeconds: TimeInterval
-    public let typography: AKTypography
+    public let liveDrift: TimeInterval
     public let onJumpToLive: (() -> Void)?
-
+    
     @State private var isPulsing: Bool = false
-
+    
+    @Environment(\.akPlayerTheme) private var theme
+    
     public init(
         isAtLiveEdge: Bool = true,
-        offsetSeconds: TimeInterval = 0,
-        typography: AKTypography = .standard,
+        liveDrift: TimeInterval = 0,
         onJumpToLive: (() -> Void)? = nil
     ) {
         self.isAtLiveEdge = isAtLiveEdge
-        self.offsetSeconds = offsetSeconds
-        self.typography = typography
+        self.liveDrift = liveDrift
         self.onJumpToLive = onJumpToLive
     }
-
+    
     public var body: some View {
         Button(action: {
             if !isAtLiveEdge {
@@ -38,10 +38,10 @@ public struct AKLiveBadgeView: View {
                     .frame(width: AKSpacing.xs, height: AKSpacing.xs)
                     .scaleEffect(isAtLiveEdge && isPulsing ? 1.25 : 1.0)
                     .opacity(isAtLiveEdge && isPulsing ? 0.7 : 1.0)
-
-                Text(isAtLiveEdge ? "LIVE" : "- \(formatOffset(offsetSeconds))")
-                    .font(typography.badge)
-                    .foregroundColor(.white)
+                
+                Text(isAtLiveEdge ? "LIVE" : "- \(liveDrift.humanReadableClock)")
+                    .font(theme.typography.badge)
+                    .foregroundColor(theme.palette.foregroundPrimary)
             }
             .padding(.horizontal, AKSpacing.sm)
             .padding(.vertical, AKSpacing.xxs)
@@ -61,13 +61,6 @@ public struct AKLiveBadgeView: View {
             }
         }
     }
-
-    private func formatOffset(_ seconds: TimeInterval) -> String {
-        let absSec = Int(abs(seconds))
-        let m = absSec / 60
-        let s = absSec % 60
-        return String(format: "%d:%02d", m, s)
-    }
 }
 
 // MARK: - Previews
@@ -76,7 +69,7 @@ public struct AKLiveBadgeView: View {
         Color.black.ignoresSafeArea()
         HStack(spacing: AKSpacing.lg) {
             AKLiveBadgeView(isAtLiveEdge: true)
-            AKLiveBadgeView(isAtLiveEdge: false, offsetSeconds: 740)
+            AKLiveBadgeView(isAtLiveEdge: false, liveDrift: 740)
         }
     }
 }
