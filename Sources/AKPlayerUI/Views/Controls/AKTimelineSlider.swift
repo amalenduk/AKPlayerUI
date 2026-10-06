@@ -18,8 +18,6 @@ public struct AKTimelineSlider: View {
     public let isLive: Bool
     public let isAtLiveEdge: Bool
     public let liveOffset: TimeInterval
-    public let palette: AKColorPalette
-    public let typography: AKTypography
     
     public let onJumpToLive: (() -> Void)?
     public let onScrubBegan: (() -> Void)?
@@ -28,6 +26,9 @@ public struct AKTimelineSlider: View {
     
     @State private var isDragging: Bool = false
     @State private var dragPosition: Double = 0.0
+    
+    
+    @Environment(\.akPlayerTheme) private var theme
     
     public init(
         currentTime: TimeInterval,
@@ -55,8 +56,6 @@ public struct AKTimelineSlider: View {
         self.isLive = isLive
         self.isAtLiveEdge = isAtLiveEdge
         self.liveOffset = liveOffset
-        self.palette = palette
-        self.typography = typography
         self.onJumpToLive = onJumpToLive
         self.onScrubBegan = onScrubBegan
         self.onScrubChanged = onScrubChanged
@@ -74,7 +73,7 @@ public struct AKTimelineSlider: View {
                 return 1.0
             }
             guard duration > 0 else { return 1.0 }
-            return max(0, min(1.0, currentTime / duration))
+            return max(0, min(1.0, 1.0 - (liveOffset / duration)))
         }
         guard duration > 0 else { return 0 }
         return max(0, min(1.0, currentTime / duration))
@@ -134,19 +133,19 @@ public struct AKTimelineSlider: View {
             ZStack(alignment: .leading) {
                 // Background Rail
                 Capsule()
-                    .fill(palette.progressRailRemaining)
+                    .fill(theme.palette.progressRailRemaining)
                     .frame(height: isDragging ? 6 : 4)
                 
                 // Buffered Progress Bar
                 Capsule()
-                    .fill(palette.progressRailBuffered)
+                    .fill(theme.palette.progressRailBuffered)
                     .frame(width: max(0, trackWidth * CGFloat(bufferedProgress)), height: isDragging ? 6 : 4)
                 
                 // Active Played Progress Bar
                 Capsule()
                     .fill(
-                        isAdActive ? palette.adActiveProgress :
-                            (isLive ? Color.red : palette.accent)
+                        isAdActive ? theme.palette.adActiveProgress :
+                            (isLive ? Color.red : theme.palette.accent)
                     )
                     .frame(width: max(0, trackWidth * CGFloat(activeProgress)), height: isDragging ? 6 : 4)
                 
@@ -155,7 +154,7 @@ public struct AKTimelineSlider: View {
                     ForEach(cuePoints, id: \.self) { cueTime in
                         let ratio = max(0, min(1.0, cueTime / duration))
                         Circle()
-                            .fill(palette.adBreakIndicator)
+                            .fill(theme.palette.adBreakIndicator)
                             .frame(width: 5, height: 5)
                             .offset(x: max(0, trackWidth * CGFloat(ratio) - 2.5))
                     }
@@ -223,14 +222,14 @@ public struct AKTimelineSlider: View {
                 .frame(width: 8, height: 8)
             
             Text("BROADCASTING LIVE")
-                .font(typography.badge)
+                .font(theme.typography.badge)
                 .foregroundColor(.white)
             
             Spacer()
             
             Text("Real-Time Feed")
-                .font(typography.caption2)
-                .foregroundColor(palette.textSecondary)
+                .font(theme.typography.caption2)
+                .foregroundColor(theme.palette.textSecondary)
         }
         .frame(height: 20)
     }
@@ -241,9 +240,9 @@ public struct AKTimelineSlider: View {
             if isLive {
                 if isSeekEnabled {
                     // DVR Live stream: left side shows stream elapsed or current position
-                    Text(effectiveLiveEdge ? "LIVE BROADCAST" : "-\(currentLiveOffset.humanReadableClock)")
-                        .font(typography.timecodeSmall)
-                        .foregroundColor(effectiveLiveEdge ? palette.textSecondary : palette.accent)
+                    Text(effectiveLiveEdge ? "LIVE BROADCAST" : "-\(formatOffset(currentLiveOffset))")
+                        .font(theme.typography.timecodeSmall)
+                        .foregroundColor(effectiveLiveEdge ? theme.palette.textSecondary : theme.palette.accent)
                     
                     Spacer()
                     
@@ -261,21 +260,33 @@ public struct AKTimelineSlider: View {
             } else {
                 // Standard VOD
                 Text(displayTime.humanReadableClock)
-                    .font(typography.timecodeSmall)
-                    .foregroundColor(palette.textSecondary)
+                    .font(theme.typography.timecodeSmall)
+                    .foregroundColor(theme.palette.textSecondary)
                 
                 Spacer()
                 
                 if isAdActive {
                     Text("Ad Break • Scrubbing Locked")
-                        .font(typography.badge)
-                        .foregroundColor(palette.adActiveProgress)
+                        .font(theme.typography.badge)
+                        .foregroundColor(theme.palette.adActiveProgress)
                 } else if duration > 0 {
                     Text("-\(max(0, duration - displayTime).humanReadableClock)")
-                        .font(typography.timecodeSmall)
-                        .foregroundColor(palette.textSecondary)
+                        .font(theme.typography.timecodeSmall)
+                        .foregroundColor(theme.palette.textSecondary)
                 }
             }
+        }
+    }
+
+    private func formatOffset(_ seconds: TimeInterval) -> String {
+        let total = Int(max(0, seconds))
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let secs = total % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, secs)
+        } else {
+            return String(format: "%d:%02d", minutes, secs)
         }
     }
 }

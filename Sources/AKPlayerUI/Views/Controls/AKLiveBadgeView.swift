@@ -39,15 +39,15 @@ public struct AKLiveBadgeView: View {
                     .scaleEffect(isAtLiveEdge && isPulsing ? 1.25 : 1.0)
                     .opacity(isAtLiveEdge && isPulsing ? 0.7 : 1.0)
                 
-                Text(isAtLiveEdge ? "LIVE" : "- \(liveDrift.humanReadableClock)")
+                Text("LIVE")
                     .font(theme.typography.badge)
-                    .foregroundColor(theme.palette.foregroundPrimary)
+                    .foregroundColor(isAtLiveEdge ? theme.palette.foregroundPrimary : theme.palette.foregroundPrimary.opacity(0.85))
             }
             .padding(.horizontal, AKSpacing.sm)
             .padding(.vertical, AKSpacing.xxs)
             .background(
                 Capsule()
-                    .fill(isAtLiveEdge ? Color.red.opacity(0.25) : Color.white.opacity(0.15))
+                    .fill(isAtLiveEdge ? Color.red.opacity(0.25) : Color.white.opacity(0.12))
             )
             .overlay(
                 Capsule()

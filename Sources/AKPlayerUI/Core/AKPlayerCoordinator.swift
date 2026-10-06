@@ -251,6 +251,29 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     /// Seeks to an absolute timestamp in seconds.
     public func seek(to seconds: TimeInterval) {
         guard capabilities.canSeek, !adManager.isAdActive else { return }
+        
+        if capabilities.isLive {
+            if let dvrWindow = player.currentMedia?.dvrWindow, dvrWindow.duration.seconds > 0 {
+                let targetAbsoluteSeconds: Double
+                if seconds >= dvrWindow.start.seconds {
+                    // Already an absolute timestamp (e.g. from skipBackward/skipForward)
+                    targetAbsoluteSeconds = min(dvrWindow.end.seconds, max(dvrWindow.start.seconds, seconds))
+                } else {
+                    // Relative to DVR window [0...duration] from the timeline scrubber
+                    let clampedDvrPos = max(0, min(dvrWindow.duration.seconds, seconds))
+                    targetAbsoluteSeconds = dvrWindow.start.seconds + clampedDvrPos
+                }
+                let drift = max(0, dvrWindow.end.seconds - targetAbsoluteSeconds)
+                self.currentTime = targetAbsoluteSeconds
+                self.liveOffset = drift
+                self.isAtLiveEdge = drift <= 3.0
+                Task {
+                    _ = await player.seek(to: .seconds(targetAbsoluteSeconds), scope: .primary)
+                }
+                return
+            }
+        }
+        
         let clamped = max(0, min(seconds, duration > 0 ? duration : seconds))
         currentTime = clamped
         Task {
@@ -275,6 +298,9 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     /// Relative seek forward by configured step.
     public func skipForward() {
         guard capabilities.canSeek, !adManager.isAdActive else { return }
+        if capabilities.isLive && isAtLiveEdge {
+            return
+        }
         seek(to: currentTime + configuration.playback.skipForwardDuration)
     }
     
@@ -513,6 +539,9 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         if player.isLive {
             isAtLiveEdge = media.isAtLiveEdge
             liveOffset = media.liveDrift ?? 0
+            if let dvrDuration = media.dvrWindow?.duration.seconds, dvrDuration.isFinite, dvrDuration > 0 {
+                self.duration = dvrDuration
+            }
         }
     }
     
