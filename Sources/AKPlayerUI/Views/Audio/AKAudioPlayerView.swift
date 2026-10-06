@@ -452,7 +452,7 @@ public struct AKAudioPlayerView: View {
             AKTimelineSlider(
                 currentTime: coordinator.currentTime,
                 duration: coordinator.duration,
-                bufferedTime: coordinator.bufferedTime,
+                loadedTimeRanges: coordinator.loadedTimeRanges,
                 cuePoints: coordinator.interstitialMarkers.map { $0.time },
                 isAdActive: coordinator.adManager.isAdActive,
                 palette: theme.palette,

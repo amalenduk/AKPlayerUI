@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import CoreMedia
 import AKPlayer
 
 /// Single Responsibility: Timeline progress rendering, ad cue markers, scrubbing interaction,
@@ -11,7 +12,7 @@ import AKPlayer
 public struct AKTimelineSlider: View {
     public let currentTime: TimeInterval
     public let duration: TimeInterval
-    public let bufferedTime: TimeInterval
+    public let loadedTimeRanges: [CMTimeRange]
     public let cuePoints: [TimeInterval]
     public let isAdActive: Bool
     public let isSeekEnabled: Bool
@@ -33,7 +34,7 @@ public struct AKTimelineSlider: View {
     public init(
         currentTime: TimeInterval,
         duration: TimeInterval,
-        bufferedTime: TimeInterval = 0,
+        loadedTimeRanges: [CMTimeRange] = [],
         cuePoints: [TimeInterval] = [],
         isAdActive: Bool = false,
         isSeekEnabled: Bool = true,
@@ -49,7 +50,7 @@ public struct AKTimelineSlider: View {
     ) {
         self.currentTime = currentTime
         self.duration = duration
-        self.bufferedTime = bufferedTime
+        self.loadedTimeRanges = loadedTimeRanges
         self.cuePoints = cuePoints
         self.isAdActive = isAdActive
         self.isSeekEnabled = isSeekEnabled
@@ -79,13 +80,7 @@ public struct AKTimelineSlider: View {
         return max(0, min(1.0, currentTime / duration))
     }
     
-    private var bufferedProgress: Double {
-        if isLive {
-            return 1.0
-        }
-        guard duration > 0 else { return 0 }
-        return max(0, min(1.0, bufferedTime / duration))
-    }
+
     
     private var displayTime: TimeInterval {
         if isDragging {
@@ -136,10 +131,29 @@ public struct AKTimelineSlider: View {
                     .fill(theme.palette.progressRailRemaining)
                     .frame(height: isDragging ? 6 : 4)
                 
-                // Buffered Progress Bar
-                Capsule()
-                    .fill(theme.palette.progressRailBuffered)
-                    .frame(width: max(0, trackWidth * CGFloat(bufferedProgress)), height: isDragging ? 6 : 4)
+                // Buffered Progress Bars (YouTube-style segmented ranges)
+                if isLive {
+                    Capsule()
+                        .fill(theme.palette.progressRailBuffered)
+                        .frame(width: trackWidth, height: isDragging ? 6 : 4)
+                } else if duration > 0 {
+                    ForEach(loadedTimeRanges.indices, id: \.self) { index in
+                        let range = loadedTimeRanges[index]
+                        let startSec = range.start.seconds
+                        let endSec = range.start.seconds + range.duration.seconds
+                        if startSec.isFinite && endSec.isFinite && endSec > startSec {
+                            let startProgress = max(0, min(1.0, startSec / duration))
+                            let endProgress = max(0, min(1.0, endSec / duration))
+                            let segmentWidth = max(0, trackWidth * CGFloat(endProgress - startProgress))
+                            let segmentOffset = trackWidth * CGFloat(startProgress)
+                            
+                            Capsule()
+                                .fill(theme.palette.progressRailBuffered)
+                                .frame(width: segmentWidth, height: isDragging ? 6 : 4)
+                                .offset(x: segmentOffset)
+                        }
+                    }
+                }
                 
                 // Active Played Progress Bar
                 Capsule()

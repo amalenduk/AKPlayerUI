@@ -13,7 +13,7 @@ import AKPlayer
 /// multiplatform presentation modes, 10-band equalizer DSP, and native ad overlays.
 /// Strictly relies on `AKPlayer` as the single core backbone.
 @MainActor
-public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDelegate, @unchecked Sendable {
+public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked Sendable {
     
     public static let shared = AKPlayerCoordinator()
     
@@ -69,7 +69,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     @Published public private(set) var autoPlay: Bool = false
     @Published public private(set) var currentTime: TimeInterval = 0
     @Published public private(set) var duration: TimeInterval = 0
-    @Published public private(set) var bufferedTime: TimeInterval = 0
+    @Published public private(set) var loadedTimeRanges: [CMTimeRange] = []
     @Published public private(set) var isPlaying: Bool = false
     @Published public private(set) var isBuffering: Bool = false
     @Published public var playbackRate: Float = 1.0
@@ -106,7 +106,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     public let adManager: AKAdManager
     
     private var cancellables = Set<AnyCancellable>()
-    private var interstitialTask: Task<Void, Never>?
+    private var playerEventsTask: Task<Void, Never>?
     
     public override init() {
         self.player = AKPlayer()
@@ -114,9 +114,9 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         self.adManager = AKAdManager()
         self.uiState = AKPlayerUIState()
         super.init()
-        self.player.delegate = self
         setupAdManagerCallbacks()
         bindUIState()
+        startObservingPlayerEvents()
     }
     
     /// Custom initializer supporting injected AKPlayer instances or testing.
@@ -126,9 +126,9 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         self.adManager = AKAdManager()
         self.uiState = AKPlayerUIState()
         super.init()
-        self.player.delegate = self
         setupAdManagerCallbacks()
         bindUIState()
+        startObservingPlayerEvents()
     }
     
     private func bindUIState() {
@@ -140,7 +140,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
     }
     
     deinit {
-        interstitialTask?.cancel()
+        playerEventsTask?.cancel()
     }
     
     // MARK: - High-Level Playback Commands (Zero-Boilerplate Entry Point)
@@ -196,11 +196,12 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
             self.presentationMode = .miniPlayer
         }
         
+        self.loadedTimeRanges = []
+        
         // Delegate to AKPlayer engine
         player.load(media: media, autoPlay: autoPlay, at: startPosition)
         
-        // Observe interstitials
-        startObservingInterstitials()
+
     }
     
     /// Loads a simple URL with optional title and artwork.
@@ -469,14 +470,117 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
         }
     }
     
-    private func startObservingInterstitials() {
-        interstitialTask?.cancel()
-        interstitialTask = Task { [weak self] in
+    // MARK: - Unified Player Event Observation
+    
+    private func startObservingPlayerEvents() {
+        playerEventsTask?.cancel()
+        playerEventsTask = Task { @MainActor [weak self] in
             guard let self = self else { return }
-            for await event in self.player.interstitialService.events {
+            for await event in self.player.events {
                 guard !Task.isCancelled else { break }
-                self.handleInterstitialEvent(event)
+                self.handlePlayerEvent(event)
             }
+        }
+    }
+    
+    private func handlePlayerEvent(_ event: AKPlayerEvent) {
+        switch event {
+        case let .stateDidChange(state):
+            self.state = state
+            self.autoPlay = player.autoPlay
+            self.isPlaying = state.isPlaying
+            self.isBuffering = state.isBuffering
+            
+            if state.isLoaded || state.isPlaying {
+                let dur = player.currentItemDuration.seconds
+                if !dur.isNaN && dur > 0 {
+                    self.duration = dur
+                }
+                if let media = player.currentMedia {
+                    self.chapters = media.chapterService.chapters
+                    refreshAvailableTracks()
+                }
+            }
+            
+        case let .timeDidChange(currentTime):
+            let sec = currentTime.seconds
+            if !sec.isNaN && sec >= 0 {
+                self.currentTime = sec
+                if activeChapter == nil || !(activeChapter?.contains(seconds: sec) ?? false) {
+                    self.activeChapter = chapters.first { $0.contains(seconds: sec) }
+                }
+            }
+            if player.isLive, let media = player.currentMedia {
+                isAtLiveEdge = media.isAtLiveEdge
+                liveOffset = media.liveDrift ?? 0
+                if let dvrDuration = media.dvrWindow?.duration.seconds, dvrDuration.isFinite, dvrDuration > 0 {
+                    self.duration = dvrDuration
+                }
+            }
+            
+        case let .playbackRateDidChange(newRate, _):
+            self.playbackRate = newRate.rate
+            
+        case .didReachEnd:
+            if configuration.playback.autoplayNextInQueue {
+                // Queue advancement
+            }
+            
+        case let .media(mediaEvent):
+            switch mediaEvent {
+            case let .loadedTimeRangesDidChange(ranges):
+                self.loadedTimeRanges = ranges
+            case let .seekableTimeRangesDidChange(ranges):
+                if self.capabilities.isLive, let last = ranges.last {
+                    let dur = last.duration.seconds
+                    if dur.isFinite && dur > 0 {
+                        self.duration = dur
+                    }
+                }
+            case let .durationDidChange(dur):
+                let sec = dur.seconds
+                if !sec.isNaN && sec.isFinite && sec > 0 && !self.capabilities.isLive {
+                    self.duration = sec
+                }
+            default:
+                break
+            }
+            
+        case let .chapter(chapterEvent):
+            switch chapterEvent {
+            case let .chaptersDidChange(chapters):
+                self.chapters = chapters
+                if let current = activeChapter, !chapters.contains(where: { $0.id == current.id }) {
+                    self.activeChapter = chapters.first { $0.contains(seconds: self.currentTime) }
+                }
+            case let .currentChapterDidChange(chapter):
+                self.activeChapter = chapter
+            }
+            
+        case let .trackSelection(trackEvent):
+            switch trackEvent {
+            case let .selectedTrackDidChange(option, for: trackType):
+                if trackType == .audio {
+                    self.selectedAudioTrack = option
+                } else if trackType == .subtitle {
+                    self.selectedSubtitleTrack = option
+                }
+            case let .availableTracksDidChange(options, for: trackType):
+                if trackType == .audio {
+                    self.availableAudioTracks = options
+                } else if trackType == .subtitle {
+                    self.availableSubtitleTracks = options
+                }
+            }
+            
+        case let .interstitial(interstitialEvent):
+            handleInterstitialEvent(interstitialEvent)
+            
+        case let .mediaDidChange(media):
+            self.currentMedia = media
+            
+        default:
+            break
         }
     }
     
@@ -509,51 +613,6 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, AKPlayerDele
             break
         }
     }
-    
-    // MARK: - AKPlayerDelegate
-    
-    public func akPlayer(_ player: AKPlayer, didChangeStateTo state: AKPlayerState) {
-        self.state = state
-        self.autoPlay = player.autoPlay
-        self.isPlaying = state.isPlaying
-        self.isBuffering = state.isBuffering
-        
-        if state.isLoaded || state.isPlaying {
-            let dur = player.currentItemDuration.seconds
-            if !dur.isNaN && dur > 0 {
-                self.duration = dur
-            }
-            if let media = player.currentMedia {
-                self.chapters = media.chapterService.chapters
-                refreshAvailableTracks()
-            }
-        }
-    }
-    
-    public func akPlayer(_ player: AKPlayer, didChangeCurrentTimeTo currentTime: CMTime, for media: any AKPlayable) {
-        let sec = currentTime.seconds
-        if !sec.isNaN && sec >= 0 {
-            self.currentTime = sec
-            self.activeChapter = chapters.first { $0.contains(seconds: sec) }
-        }
-        if player.isLive {
-            isAtLiveEdge = media.isAtLiveEdge
-            liveOffset = media.liveDrift ?? 0
-            if let dvrDuration = media.dvrWindow?.duration.seconds, dvrDuration.isFinite, dvrDuration > 0 {
-                self.duration = dvrDuration
-            }
-        }
-    }
-    
-    public func akPlayer(_ player: AKPlayer, didReachEndAt time: CMTime, for media: any AKPlayable) {
-        if configuration.playback.autoplayNextInQueue {
-            // Queue advancement
-        }
-    }
-    
-    public func akPlayer(_ player: AKPlayer, didChangePlaybackRateTo newRate: AKPlaybackRate, from oldRate: AKPlaybackRate) {
-        self.playbackRate = newRate.rate
-    }
 }
 
 // MARK: - SwiftUI Preview Helper
@@ -565,7 +624,7 @@ extension AKPlayerCoordinator {
         coordinator.currentSubtitle = "Christopher Nolan • 2024"
         coordinator.currentTime = 1420
         coordinator.duration = 7240
-        coordinator.bufferedTime = 2800
+        coordinator.loadedTimeRanges = [CMTimeRange(start: .zero, duration: CMTime(seconds: 2800, preferredTimescale: 600))]
         coordinator.isPlaying = true
         coordinator.presentationMode = .fullScreen
         coordinator.capabilities = .fullVideo
@@ -601,7 +660,7 @@ extension AKPlayerCoordinator {
         coordinator.currentSubtitle = "The Weeknd • Starboy"
         coordinator.currentTime = 115
         coordinator.duration = 230
-        coordinator.bufferedTime = 180
+        coordinator.loadedTimeRanges = [CMTimeRange(start: .zero, duration: CMTime(seconds: 180, preferredTimescale: 600))]
         coordinator.isPlaying = true
         coordinator.presentationMode = .fullScreen
         coordinator.capabilities = AKMediaCapabilities(

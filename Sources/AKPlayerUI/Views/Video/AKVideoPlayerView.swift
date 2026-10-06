@@ -241,7 +241,7 @@ public struct AKVideoPlayerView: View {
             AKTimelineSlider(
                 currentTime: coordinator.currentTime,
                 duration: coordinator.duration,
-                bufferedTime: coordinator.bufferedTime,
+                loadedTimeRanges: coordinator.loadedTimeRanges,
                 cuePoints: coordinator.configuration.ads.cuePoints,
                 isAdActive: coordinator.adManager.isAdActive,
                 isSeekEnabled: coordinator.capabilities.canSeek,

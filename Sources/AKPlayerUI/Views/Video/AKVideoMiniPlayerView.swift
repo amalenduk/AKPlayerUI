@@ -116,7 +116,7 @@ public struct AKVideoMiniPlayerView: View {
                 }
                 
                 // Quick Play/Pause Action
-                AKPlayPauseButton(state: player.state, autoPlay: player.autoPlay) {
+                AKPlayPauseButton(state: player.state, autoPlay: player.autoPlay, size: 36) {
                     player.togglePlayPause()
                 }
                 
