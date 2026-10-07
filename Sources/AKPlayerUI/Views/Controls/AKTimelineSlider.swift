@@ -125,7 +125,7 @@ public struct AKTimelineSlider: View {
     
     public var body: some View {
         VStack(spacing: AKSpacing.xxs) {
-            if isLive && !isSeekEnabled {
+            if isLive && !isSeekEnabled && duration <= 0 {
                 // Pure Live Stream (No DVR seeking backwards)
                 pureLiveRibbon
             } else {

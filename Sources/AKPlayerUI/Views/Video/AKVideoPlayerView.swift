@@ -45,16 +45,24 @@ public struct AKVideoPlayerView: View {
             // 2. Gesture Surface (Edge swipes, double-tap seek, pinch zoom)
             AKVideoGestureOverlay(
                 configuration: coordinator.configuration.gestures,
+                canSeek: coordinator.capabilities.canSeek && !coordinator.adManager.isAdActive,
                 typography: theme.typography,
                 onSingleTap: {
                     toggleHUD()
                 },
                 onDoubleTapSeek: { direction in
+                    guard coordinator.capabilities.canSeek && !coordinator.adManager.isAdActive else { return }
                     if direction == .backward {
                         coordinator.skipBackward()
                     } else {
                         coordinator.skipForward()
                     }
+                    resetHUDTimer()
+                },
+                onVolumeChanged: { _ in
+                    resetHUDTimer()
+                },
+                onBrightnessChanged: { _ in
                     resetHUDTimer()
                 }
             )

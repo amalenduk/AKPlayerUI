@@ -5,9 +5,10 @@
 
 import SwiftUI
 
-/// Single Responsibility: Detects edge swipes (volume/brightness), double-tap seeks, and pinch zoom.
+/// Single Responsibility: Detects edge swipes (system volume/brightness), double-tap seeks, and pinch zoom.
 public struct AKVideoGestureOverlay: View {
     public let configuration: AKGestureConfiguration
+    public let canSeek: Bool
     public let typography: AKTypography
     public let onSingleTap: () -> Void
     public let onDoubleTapSeek: (AKSeekDirection) -> Void
@@ -19,11 +20,22 @@ public struct AKVideoGestureOverlay: View {
 
     @State private var currentVolume: Float = 0.5
     @State private var currentBrightness: Float = 0.5
+    @State private var dragStartVolume: Float? = nil
+    @State private var dragStartBrightness: Float? = nil
+    @State private var activeVerticalGesture: VerticalGestureType? = nil
+
     @State private var isShowingVolumeHUD: Bool = false
     @State private var isShowingBrightnessHUD: Bool = false
+    @State private var hudDismissTask: Task<Void, Never>? = nil
+
+    private enum VerticalGestureType {
+        case brightness
+        case volume
+    }
 
     public init(
         configuration: AKGestureConfiguration = AKGestureConfiguration(),
+        canSeek: Bool = true,
         typography: AKTypography = .standard,
         onSingleTap: @escaping () -> Void,
         onDoubleTapSeek: @escaping (AKSeekDirection) -> Void,
@@ -31,6 +43,7 @@ public struct AKVideoGestureOverlay: View {
         onBrightnessChanged: @escaping (Float) -> Void = { _ in }
     ) {
         self.configuration = configuration
+        self.canSeek = canSeek
         self.typography = typography
         self.onSingleTap = onSingleTap
         self.onDoubleTapSeek = onDoubleTapSeek
@@ -48,7 +61,7 @@ public struct AKVideoGestureOverlay: View {
                 Color.black.opacity(0.001)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { location in
-                        guard configuration.isDoubleTapToSeekEnabled else { return }
+                        guard configuration.isDoubleTapToSeekEnabled && canSeek else { return }
                         let x = location.x
                         if x < w * 0.35 {
                             triggerSeekRipple(direction: .backward)
@@ -67,23 +80,56 @@ public struct AKVideoGestureOverlay: View {
                             .onChanged { value in
                                 let startX = value.startLocation.x
                                 let translationY = value.translation.height
-                                let delta = Float(-translationY / (h * 0.7))
 
-                                if configuration.isVerticalSwipeBrightnessEnabled && startX < w * 0.4 {
-                                    // Left vertical swipe: Brightness
-                                    currentBrightness = max(0.0, min(1.0, currentBrightness + delta * 0.05))
-                                    isShowingBrightnessHUD = true
-                                    onBrightnessChanged(currentBrightness)
-                                } else if configuration.isVerticalSwipeVolumeEnabled && startX > w * 0.6 {
-                                    // Right vertical swipe: Volume
-                                    currentVolume = max(0.0, min(1.0, currentVolume + delta * 0.05))
-                                    isShowingVolumeHUD = true
-                                    onVolumeChanged(currentVolume)
+                                // 1. Determine active gesture type when beginning vertical swipe
+                                if activeVerticalGesture == nil {
+                                    syncSystemValues()
+                                    if configuration.isVerticalSwipeBrightnessEnabled && startX < w * 0.4 {
+                                        activeVerticalGesture = .brightness
+                                        dragStartBrightness = currentBrightness
+                                        isShowingBrightnessHUD = true
+                                        isShowingVolumeHUD = false
+                                    } else if configuration.isVerticalSwipeVolumeEnabled && startX > w * 0.6 {
+                                        activeVerticalGesture = .volume
+                                        dragStartVolume = currentVolume
+                                        isShowingVolumeHUD = true
+                                        isShowingBrightnessHUD = false
+                                    }
+                                    hudDismissTask?.cancel()
+                                }
+
+                                // 2. High-speed 1:1 responsive linear tracking across screen height
+                                let dragDistance = Float(-translationY / max(1.0, h * 0.65))
+
+                                switch activeVerticalGesture {
+                                case .brightness:
+                                    guard let startVal = dragStartBrightness else { return }
+                                    let newVal = max(0.0, min(1.0, startVal + dragDistance))
+                                    currentBrightness = newVal
+                                    AKSystemMediaDeviceManager.shared.setBrightness(newVal)
+                                    onBrightnessChanged(newVal)
+
+                                case .volume:
+                                    guard let startVal = dragStartVolume else { return }
+                                    let newVal = max(0.0, min(1.0, startVal + dragDistance))
+                                    currentVolume = newVal
+                                    AKSystemMediaDeviceManager.shared.setVolume(newVal)
+                                    onVolumeChanged(newVal)
+
+                                case .none:
+                                    break
                                 }
                             }
                             .onEnded { _ in
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                                    withAnimation(.easeOut(duration: 0.3)) {
+                                activeVerticalGesture = nil
+                                dragStartBrightness = nil
+                                dragStartVolume = nil
+
+                                hudDismissTask?.cancel()
+                                hudDismissTask = Task { @MainActor in
+                                    try? await Task.sleep(nanoseconds: 1_200_000_000)
+                                    guard !Task.isCancelled else { return }
+                                    withAnimation(.easeOut(duration: 0.25)) {
                                         isShowingBrightnessHUD = false
                                         isShowingVolumeHUD = false
                                     }
@@ -134,17 +180,25 @@ public struct AKVideoGestureOverlay: View {
                 // Vertical Floating HUDs
                 if isShowingBrightnessHUD {
                     AKBrightnessSlider(brightness: currentBrightness, isCompact: true)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .transition(.opacity)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .transition(.opacity)
                 }
 
                 if isShowingVolumeHUD {
                     AKVolumeSlider(volume: currentVolume, isCompact: true, typography: typography)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .transition(.opacity)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .transition(.opacity)
                 }
             }
         }
+        .onAppear {
+            syncSystemValues()
+        }
+    }
+
+    private func syncSystemValues() {
+        currentBrightness = AKSystemMediaDeviceManager.shared.currentBrightness
+        currentVolume = AKSystemMediaDeviceManager.shared.currentVolume
     }
 
     private func triggerSeekRipple(direction: AKSeekDirection) {
