@@ -7,10 +7,12 @@ import SwiftUI
 #if os(iOS)
 import UIKit
 #endif
+import AKPlayer
 
 /// Single Responsibility: Detects edge swipes (system volume/brightness), double-tap seeks, press-and-hold 2x speed, and gestures.
 public struct AKVideoGestureOverlay: View {
     public let configuration: AKGestureConfiguration
+    public let coordinator: AKPlayerCoordinator
     public let isHUDVisible: Bool
     public let canSeek: Bool
     public let canPlayFastForward: Bool
@@ -41,6 +43,7 @@ public struct AKVideoGestureOverlay: View {
 
     public init(
         configuration: AKGestureConfiguration = AKGestureConfiguration(),
+        coordinator: AKPlayerCoordinator,
         isHUDVisible: Bool = false,
         canSeek: Bool = true,
         canPlayFastForward: Bool = true,
@@ -55,6 +58,7 @@ public struct AKVideoGestureOverlay: View {
         onFastPlaybackEnded: @escaping () -> Void = {}
     ) {
         self.configuration = configuration
+        self.coordinator = coordinator
         self.isHUDVisible = isHUDVisible
         self.canSeek = canSeek
         self.canPlayFastForward = canPlayFastForward
@@ -255,45 +259,25 @@ public struct AKVideoGestureOverlay: View {
                     .allowsHitTesting(false)
                 }
 
-                // Left Ripple (-10s Seek Indicator)
-                if activeRippleDirection == .backward {
+                // Left Ripple (-10s Seek Indicator with Wave & Rotation)
+                if activeRippleDirection == .backward && (coordinator.currentMedia?.seekingThroughMedia.canSeek(to: .offset(-10)) ?? false) {
                     HStack {
-                        VStack(spacing: AKSpacing.xs) {
-                            Image(systemName: "gobackward.10")
-                                .font(.system(size: 38, weight: .bold))
-                            Text("10 seconds")
-                                .font(typography.badge)
-                        }
-                        .foregroundColor(.white)
-                        .padding(AKSpacing.xl)
-                        .background(Circle().fill(Color.black.opacity(0.55)))
-                        .opacity(rippleOpacity)
-                        .scaleEffect(rippleOpacity > 0 ? 1.0 : 0.8)
-
+                        AKDoubleTapSeekWaveView(direction: .backward, typography: typography)
+                            .opacity(rippleOpacity)
                         Spacer()
                     }
-                    .padding(.leading, AKSpacing.xxl)
+                    .padding(.leading, AKSpacing.lg)
                     .allowsHitTesting(false)
                 }
 
-                // Right Ripple (+15s Seek Indicator)
-                if activeRippleDirection == .forward {
+                // Right Ripple (+15s Seek Indicator with Wave & Rotation)
+                if activeRippleDirection == .forward && (coordinator.currentMedia?.seekingThroughMedia.canSeek(to: .offset(15)) ?? false) {
                     HStack {
                         Spacer()
-
-                        VStack(spacing: AKSpacing.xs) {
-                            Image(systemName: "goforward.15")
-                                .font(.system(size: 38, weight: .bold))
-                            Text("15 seconds")
-                                .font(typography.badge)
-                        }
-                        .foregroundColor(.white)
-                        .padding(AKSpacing.xl)
-                        .background(Circle().fill(Color.black.opacity(0.55)))
-                        .opacity(rippleOpacity)
-                        .scaleEffect(rippleOpacity > 0 ? 1.0 : 0.8)
+                        AKDoubleTapSeekWaveView(direction: .forward, typography: typography)
+                            .opacity(rippleOpacity)
                     }
-                    .padding(.trailing, AKSpacing.xxl)
+                    .padding(.trailing, AKSpacing.lg)
                     .allowsHitTesting(false)
                 }
 
@@ -368,18 +352,21 @@ public struct AKVideoGestureOverlay: View {
     }
 
     private func triggerSeekRipple(direction: AKSeekDirection) {
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
         activeRippleDirection = direction
         onDoubleTapSeek(direction)
 
-        withAnimation(.easeOut(duration: 0.2)) {
+        withAnimation(.easeOut(duration: 0.15)) {
             rippleOpacity = 1.0
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(.easeOut(duration: 0.3)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+            withAnimation(.easeOut(duration: 0.25)) {
                 rippleOpacity = 0.0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 activeRippleDirection = nil
             }
         }
@@ -502,11 +489,141 @@ struct AKTouchCaptureView: UIViewRepresentable {
 }
 #endif
 
+
+// MARK: - Dynamic Double-Tap Wave & Rotating Icon Component (Compact & Outward Sliding)
+struct AKDoubleTapSeekWaveView: View {
+    let direction: AKSeekDirection
+    let typography: AKTypography
+
+    @State private var waveScale1: CGFloat = 0.6
+    @State private var waveScale2: CGFloat = 0.6
+    @State private var waveScale3: CGFloat = 0.6
+    @State private var waveOpacity1: Double = 0.65
+    @State private var waveOpacity2: Double = 0.45
+    @State private var waveOpacity3: Double = 0.25
+    @State private var iconRotation: Double = 0
+    @State private var iconScale: CGFloat = 0.6
+    @State private var chevronStep: Int = 0
+    @State private var horizontalSlide: CGFloat = 0
+
+    var isForward: Bool { direction == .forward }
+
+    var body: some View {
+        ZStack {
+            // Concentric Expanding Kinetic Shockwaves (Proportionally Compact)
+            ForEach(0..<3, id: \.self) { i in
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.6),
+                                Color.white.opacity(0.06)
+                            ],
+                            startPoint: isForward ? .leading : .trailing,
+                            endPoint: isForward ? .trailing : .leading
+                        ),
+                        lineWidth: CGFloat(2.5 - Double(i) * 0.5)
+                    )
+                    .frame(width: 90 + CGFloat(i * 22), height: 90 + CGFloat(i * 22))
+                    .scaleEffect(i == 0 ? waveScale1 : (i == 1 ? waveScale2 : waveScale3))
+                    .opacity(i == 0 ? waveOpacity1 : (i == 1 ? waveOpacity2 : waveOpacity3))
+            }
+
+            // Glassmorphic Glowing Center Core (Compact: 80pt)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.black.opacity(0.82),
+                            Color.black.opacity(0.60)
+                        ],
+                        center: .center,
+                        startRadius: 6,
+                        endRadius: 40
+                    )
+                )
+                .frame(width: 80, height: 80)
+                .overlay(
+                    Circle().stroke(Color.white.opacity(0.28), lineWidth: 1.2)
+                )
+                .shadow(color: Color.white.opacity(0.18), radius: 8, x: 0, y: 0)
+
+            // Dynamic Rotating Icon + Cascading Ripple Chevrons + Time Label
+            VStack(spacing: 3) {
+                Image(systemName: isForward ? "goforward.15" : "gobackward.10")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                    .rotationEffect(.degrees(iconRotation))
+                    .scaleEffect(iconScale)
+
+                // Cascading Kinetic Wave Chevrons (>>> or <<<)
+                HStack(spacing: 2) {
+                    if isForward {
+                        Image(systemName: "chevron.right").opacity(chevronStep >= 1 ? 1.0 : 0.25)
+                        Image(systemName: "chevron.right").opacity(chevronStep >= 2 ? 1.0 : 0.25)
+                        Image(systemName: "chevron.right").opacity(chevronStep >= 3 ? 1.0 : 0.25)
+                    } else {
+                        Image(systemName: "chevron.left").opacity(chevronStep >= 3 ? 1.0 : 0.25)
+                        Image(systemName: "chevron.left").opacity(chevronStep >= 2 ? 1.0 : 0.25)
+                        Image(systemName: "chevron.left").opacity(chevronStep >= 1 ? 1.0 : 0.25)
+                    }
+                }
+                .font(.system(size: 9, weight: .black))
+                .foregroundColor(.white.opacity(0.9))
+
+                Text(isForward ? "15s" : "10s")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
+        .offset(x: horizontalSlide)
+        .onAppear {
+            // 1. Kinetic Rotation & Spring Recoil
+            iconRotation = isForward ? -65 : 65
+            iconScale = 0.55
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.55, blendDuration: 0)) {
+                iconRotation = 0
+                iconScale = 1.0
+            }
+
+            // 2. Slide outward towards the side edge
+            horizontalSlide = isForward ? -8 : 8
+            withAnimation(.easeOut(duration: 0.55)) {
+                horizontalSlide = isForward ? 12 : -12
+            }
+
+            // 3. Cascading Staggered Expanding Shockwaves
+            withAnimation(.easeOut(duration: 0.65)) {
+                waveScale1 = 1.30
+                waveOpacity1 = 0.0
+            }
+            withAnimation(.easeOut(duration: 0.75).delay(0.08)) {
+                waveScale2 = 1.40
+                waveOpacity2 = 0.0
+            }
+            withAnimation(.easeOut(duration: 0.85).delay(0.16)) {
+                waveScale3 = 1.48
+                waveOpacity3 = 0.0
+            }
+
+            // 4. Sequential Cascading Chevrons Wave
+            withAnimation(.easeInOut(duration: 0.12)) { chevronStep = 1 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                withAnimation(.easeInOut(duration: 0.12)) { chevronStep = 2 }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+                withAnimation(.easeInOut(duration: 0.12)) { chevronStep = 3 }
+            }
+        }
+    }
+}
+
 // MARK: - Previews
 #Preview("Gesture Overlay Preview") {
     ZStack {
         Color.gray.opacity(0.3).ignoresSafeArea()
         AKVideoGestureOverlay(
+            coordinator: AKPlayerCoordinator.previewMiniVideoMock,
             onSingleTap: {},
             onDoubleTapSeek: { _ in }
         )

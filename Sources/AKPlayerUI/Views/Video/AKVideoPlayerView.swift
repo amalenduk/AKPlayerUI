@@ -45,6 +45,7 @@ public struct AKVideoPlayerView: View {
             // 2. Gesture Surface (Edge swipes, double-tap seek, pinch zoom)
             AKVideoGestureOverlay(
                 configuration: coordinator.configuration.gestures,
+                coordinator: coordinator,
                 isHUDVisible: isHUDVisible,
                 canSeek: coordinator.capabilities.canSeek,
                 canPlayFastForward: (coordinator.capabilities.canPlayFastForward || (coordinator.currentMedia?.canPlay(at: .custom(2.0)) ?? false) || coordinator.capabilities.canSeek) && !coordinator.adManager.isAdActive,
@@ -55,12 +56,15 @@ public struct AKVideoPlayerView: View {
                 },
                 onDoubleTapSeek: { direction in
                     guard coordinator.capabilities.canSeek else { return }
+                    hideHUDTask?.cancel()
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isHUDVisible = false
+                    }
                     if direction == .backward {
                         coordinator.skipBackward()
                     } else {
                         coordinator.skipForward()
                     }
-                    resetHUDTimer()
                 },
                 onVolumeChanged: { _ in
                     resetHUDTimer()
