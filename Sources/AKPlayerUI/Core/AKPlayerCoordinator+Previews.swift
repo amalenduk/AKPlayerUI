@@ -59,7 +59,6 @@ extension AKPlayerCoordinator {
             canSeek: true,
             canStepForward: false,
             canStepBackward: false,
-            canPause: true,
             canPlayFastForward: true,
             canPlayFastReverse: false
         )

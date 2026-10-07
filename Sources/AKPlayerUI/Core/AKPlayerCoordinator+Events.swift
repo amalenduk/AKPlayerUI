@@ -10,6 +10,28 @@ import AKPlayer
 
 extension AKPlayerCoordinator {
     
+    private func reevaluateMediaCapabilities() {
+        guard let currentMedia,
+              let playerItem = currentMedia.playerItem else { capabilities = .empty; return }
+        capabilities = AKMediaCapabilities(canSeek: currentMedia.canSeek,
+                                           canStepForward: playerItem.canStepForward,
+                                           canStepBackward: playerItem.canStepBackward,
+                                           canPlayReverse: playerItem.canPlayReverse,
+                                           canPlayFastForward: playerItem.canPlayFastForward,
+                                           canPlayFastReverse: playerItem.canPlayFastReverse,
+                                           canPlaySlowForward: playerItem.canPlaySlowForward,
+                                           canPlaySlowReverse: playerItem.canPlaySlowReverse
+        )
+    }
+    
+    private func reevaluateIntertialCapabilities() {
+        guard player.interstitialService.isPlayingInterstitial else { capabilities = .empty; return }
+        capabilities = AKMediaCapabilities(canSeek: player.interstitialService.canSeek,
+                                           canPlayFastForward: player.interstitialService.canFastForward,
+        )
+    }
+    
+    
     // MARK: - Unified Player Event Observation
     
     func startObservingPlayerEvents() {
@@ -117,7 +139,12 @@ extension AKPlayerCoordinator {
             self.loadedTimeRanges = ranges
             
         case let .seekableTimeRangesDidChange(ranges):
-            guard player.interstitialService.integratedTimeline == nil else { return }
+            guard player.interstitialService.integratedTimeline == nil else {
+                if !player.interstitialService.isPlayingInterstitial {
+                    self.capabilities.canSeek = currentMedia?.canSeek ?? false
+                }
+                return
+            }
             if self.isLive, let last = ranges.last {
                 let dur = last.duration.seconds
                 if dur.isFinite && dur > 0 {
@@ -232,6 +259,8 @@ extension AKPlayerCoordinator {
             let adAllowsSeek = marker?.canSeek ?? player.interstitialService.canSeek
             var allowsSkip = configuration.ads.allowsAdSkip && adAllowsSeek
             
+            reevaluateIntertialCapabilities()
+            
             if duration > 0 && duration <= skipDelay {
                 allowsSkip = false
             }
@@ -249,7 +278,7 @@ extension AKPlayerCoordinator {
             
         case .didFinish:
             adManager.endAdPod()
-            self.capabilities.canSeek = currentMedia?.canSeek ?? false
+            reevaluateMediaCapabilities()
             
         case let .progress(progress):
             adManager.updateProgress(
@@ -279,10 +308,6 @@ extension AKPlayerCoordinator {
                     let drift = max(0, self.duration - current)
                     self.liveOffset = drift
                     self.isAtLiveEdge = drift <= threshold
-                }
-                
-                if !player.interstitialService.isPlayingInterstitial {
-                    self.capabilities.canSeek = (currentMedia?.canSeek ?? false)
                 }
                 
                 if !chapters.isEmpty {

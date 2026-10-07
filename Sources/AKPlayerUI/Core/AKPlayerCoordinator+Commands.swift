@@ -30,15 +30,7 @@ extension AKPlayerCoordinator {
         
         // Media classification and initial capabilities
         self.isAudioOnly = isAudioOnly ?? media.isAudioOnly
-        let isLiveStream = player.isLive || media.isLive()
-        self.capabilities = AKMediaCapabilities(
-            canSeek: !isLiveStream || (media.liveEdgeThreshold != nil) || (media.dvrWindow != nil),
-            canStepForward: false,
-            canStepBackward: false,
-            canPause: true,
-            canPlayFastForward: false,
-            canPlayFastReverse: false
-        )
+        self.capabilities = AKMediaCapabilities.empty
         
         // Reset positions
         self.currentTime = 0

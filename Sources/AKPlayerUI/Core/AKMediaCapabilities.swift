@@ -11,20 +11,18 @@ public struct AKMediaCapabilities: Sendable, Equatable {
     public var canSeek: Bool
     public var canStepForward: Bool
     public var canStepBackward: Bool
-    public var canPause: Bool
     public var canPlayReverse: Bool
     public var canPlayFastForward: Bool
     public var canPlayFastReverse: Bool
     public var canPlaySlowForward: Bool
     public var canPlaySlowReverse: Bool
-
+    
     public init(
         canSeek: Bool = false,
         canStepForward: Bool = false,
         canStepBackward: Bool = false,
-        canPause: Bool = true,
         canPlayReverse: Bool = false,
-        canPlayFastForward: Bool = true,
+        canPlayFastForward: Bool = false,
         canPlayFastReverse: Bool = false,
         canPlaySlowForward: Bool = false,
         canPlaySlowReverse: Bool = false
@@ -32,33 +30,30 @@ public struct AKMediaCapabilities: Sendable, Equatable {
         self.canSeek = canSeek
         self.canStepForward = canStepForward
         self.canStepBackward = canStepBackward
-        self.canPause = canPause
         self.canPlayReverse = canPlayReverse
         self.canPlayFastForward = canPlayFastForward
         self.canPlayFastReverse = canPlayFastReverse
         self.canPlaySlowForward = canPlaySlowForward
         self.canPlaySlowReverse = canPlaySlowReverse
     }
-
+    
     public static let empty = AKMediaCapabilities()
-
+    
     public static let fullVideo = AKMediaCapabilities(
         canSeek: true,
         canStepForward: true,
         canStepBackward: true,
-        canPause: true,
         canPlayReverse: true,
         canPlayFastForward: true,
         canPlayFastReverse: true,
         canPlaySlowForward: true,
         canPlaySlowReverse: true
     )
-
+    
     public static let liveStreamDVR = AKMediaCapabilities(
-        canSeek: true,
+        canSeek: false,
         canStepForward: false,
         canStepBackward: false,
-        canPause: true,
         canPlayReverse: false,
         canPlayFastForward: false,
         canPlayFastReverse: false,

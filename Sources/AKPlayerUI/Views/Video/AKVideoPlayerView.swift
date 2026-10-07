@@ -45,13 +45,16 @@ public struct AKVideoPlayerView: View {
             // 2. Gesture Surface (Edge swipes, double-tap seek, pinch zoom)
             AKVideoGestureOverlay(
                 configuration: coordinator.configuration.gestures,
-                canSeek: coordinator.capabilities.canSeek && !coordinator.adManager.isAdActive,
+                isHUDVisible: isHUDVisible,
+                canSeek: coordinator.capabilities.canSeek,
+                canPlayFastForward: (coordinator.capabilities.canPlayFastForward || (coordinator.currentMedia?.canPlay(at: .custom(2.0)) ?? false) || coordinator.capabilities.canSeek) && !coordinator.adManager.isAdActive,
+                canPlayFastReverse: (coordinator.capabilities.canPlayFastReverse || (coordinator.currentMedia?.canPlay(at: .custom(-2.0)) ?? false)) && !coordinator.adManager.isAdActive,
                 typography: theme.typography,
                 onSingleTap: {
                     toggleHUD()
                 },
                 onDoubleTapSeek: { direction in
-                    guard coordinator.capabilities.canSeek && !coordinator.adManager.isAdActive else { return }
+                    guard coordinator.capabilities.canSeek else { return }
                     if direction == .backward {
                         coordinator.skipBackward()
                     } else {
@@ -64,6 +67,20 @@ public struct AKVideoPlayerView: View {
                 },
                 onBrightnessChanged: { _ in
                     resetHUDTimer()
+                },
+                onGestureActiveChanged: { isActive in
+                    if isActive {
+                        hideHUDTask?.cancel()
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            isHUDVisible = false
+                        }
+                    }
+                },
+                onFastPlaybackBegan: { targetRate in
+                    coordinator.setPlaybackRate(AKPlaybackRate(rate: targetRate))
+                },
+                onFastPlaybackEnded: {
+                    coordinator.setPlaybackRate(.normal)
                 }
             )
             
