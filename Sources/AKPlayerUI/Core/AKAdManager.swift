@@ -5,19 +5,28 @@
 
 import Foundation
 import Combine
+import AKPlayer
 
 /// Manages runtime state for native interstitial ad playback (`AKPlayerItem` streams).
 /// Completely decouples high-frequency 1-second countdown ticks from the main player coordinator.
 @MainActor
 public final class AKAdManager: ObservableObject, @unchecked Sendable {
+    @Published public internal(set) var markers: [AKInterstitialMarker] = []
     @Published public private(set) var isAdActive: Bool = false
     @Published public private(set) var currentAdIndex: Int = 0
     @Published public private(set) var totalAdsInPod: Int = 0
+    @Published public private(set) var adDuration: TimeInterval = 0
     @Published public private(set) var adTimeRemaining: TimeInterval = 0
+    @Published public private(set) var allowsSkip: Bool = false
     @Published public private(set) var isAdSkippable: Bool = false
     @Published public private(set) var adSkipCountdown: TimeInterval = 0
+    @Published public private(set) var skipCountdownDuration: TimeInterval = 5.0
     @Published public private(set) var sponsorName: String?
     @Published public private(set) var sponsorLinkURL: URL?
+
+    public var cuePoints: [TimeInterval] {
+        markers.map(\.time)
+    }
 
     public var onSkipRequested: (@MainActor () -> Void)?
 
@@ -27,7 +36,7 @@ public final class AKAdManager: ObservableObject, @unchecked Sendable {
     public func startAdPod(
         index: Int = 1,
         total: Int = 1,
-        duration: TimeInterval = 15.0,
+        duration: TimeInterval = 0,
         skipDelay: TimeInterval = 5.0,
         allowsSkip: Bool = true,
         sponsor: String? = nil,
@@ -36,14 +45,20 @@ public final class AKAdManager: ObservableObject, @unchecked Sendable {
         self.isAdActive = true
         self.currentAdIndex = index
         self.totalAdsInPod = total
+        self.adDuration = duration
         self.adTimeRemaining = duration
+        self.skipCountdownDuration = skipDelay
         self.sponsorName = sponsor
         self.sponsorLinkURL = sponsorURL
 
-        if allowsSkip && skipDelay > 0 {
+        // Short ad rule: if duration is known and is <= skipDelay, skip is disabled
+        let effectiveAllowsSkip = allowsSkip && (duration <= 0 || duration > skipDelay)
+        self.allowsSkip = effectiveAllowsSkip
+
+        if effectiveAllowsSkip && skipDelay > 0 {
             self.isAdSkippable = false
             self.adSkipCountdown = skipDelay
-        } else if allowsSkip {
+        } else if effectiveAllowsSkip {
             self.isAdSkippable = true
             self.adSkipCountdown = 0
         } else {
@@ -56,7 +71,18 @@ public final class AKAdManager: ObservableObject, @unchecked Sendable {
     public func updateProgress(currentTime: TimeInterval, duration: TimeInterval, timeRemaining: TimeInterval) {
         guard isAdActive else { return }
         self.adTimeRemaining = max(0, timeRemaining)
-        if adSkipCountdown > 0 {
+
+        if self.adDuration == 0 && duration > 0 {
+            self.adDuration = duration
+            // Re-evaluate if ad is too short for skipping once live duration is discovered
+            if allowsSkip && duration <= skipCountdownDuration {
+                self.allowsSkip = false
+                self.isAdSkippable = false
+                self.adSkipCountdown = 0
+            }
+        }
+
+        if allowsSkip && adSkipCountdown > 0 {
             adSkipCountdown = max(0, adSkipCountdown - 1.0)
             if adSkipCountdown <= 0 {
                 isAdSkippable = true
@@ -75,7 +101,9 @@ public final class AKAdManager: ObservableObject, @unchecked Sendable {
         self.isAdActive = false
         self.currentAdIndex = 0
         self.totalAdsInPod = 0
+        self.adDuration = 0
         self.adTimeRemaining = 0
+        self.allowsSkip = false
         self.isAdSkippable = false
         self.adSkipCountdown = 0
         self.sponsorName = nil

@@ -21,7 +21,7 @@ public struct AKAudioMiniPlayerView: View {
     }
 
     private var progressRatio: Double {
-        if coordinator.capabilities.isLive {
+        if coordinator.isLive {
             return 1.0
         }
         guard coordinator.duration > 0 else { return 0 }
@@ -58,7 +58,7 @@ public struct AKAudioMiniPlayerView: View {
                     Rectangle()
                         .fill(
                             coordinator.adManager.isAdActive ? theme.palette.adActiveProgress :
-                                (coordinator.capabilities.isLive ? Color.red : theme.palette.accent)
+                                (coordinator.isLive ? Color.red : theme.palette.accent)
                         )
                         .frame(width: proxy.size.width * CGFloat(progressRatio), height: 2.5)
                         .animation(.linear(duration: 0.25), value: progressRatio)

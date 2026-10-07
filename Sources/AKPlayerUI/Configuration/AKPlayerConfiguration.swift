@@ -77,3 +77,16 @@ public struct AKPlayerConfiguration: Sendable, Equatable {
         capabilities: .podcast
     )
 }
+
+import AKPlayer
+
+extension AKPlayerConfiguration {
+    /// Converts this UI configuration into a corresponding core `AKPlayer` engine configuration.
+    public func makeCorePlayerConfiguration() -> AKPlayer.Configuration {
+        var coreConfig = AKPlayer.Configuration.default
+        if capabilities.showsEqualizer == false && playback.defaultPlaybackSpeed != 1.0 {
+            coreConfig.audioTimePitchAlgorithm = .timeDomain
+        }
+        return coreConfig
+    }
+}

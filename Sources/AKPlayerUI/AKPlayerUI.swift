@@ -17,6 +17,13 @@ public enum AKPlayerUI {
         AKPlayerCoordinator.shared
     }
 
+    /// Active UI and playback presentation configuration.
+    @MainActor
+    public static var configuration: AKPlayerConfiguration {
+        get { shared.configuration }
+        set { shared.configuration = newValue }
+    }
+
     /// Loads and begins playback from a URL, automatically presenting the player interface.
     @MainActor
     public static func load(
@@ -25,8 +32,7 @@ public enum AKPlayerUI {
         subtitle: String? = nil,
         artworkURL: URL? = nil,
         presentationMode: AKPlayerPresentationMode? = nil,
-        isAudioOnly: Bool? = nil,
-        configuration: AKPlayerConfiguration? = nil
+        isAudioOnly: Bool? = nil
     ) {
         shared.load(
             url: url,
@@ -34,8 +40,7 @@ public enum AKPlayerUI {
             subtitle: subtitle,
             artworkURL: artworkURL,
             presentationMode: presentationMode,
-            isAudioOnly: isAudioOnly,
-            configuration: configuration
+            isAudioOnly: isAudioOnly
         )
     }
 
@@ -46,16 +51,14 @@ public enum AKPlayerUI {
         autoPlay: Bool = true,
         at startPosition: AKSeekTarget? = nil,
         presentationMode: AKPlayerPresentationMode? = nil,
-        isAudioOnly: Bool? = nil,
-        configuration: AKPlayerConfiguration? = nil
+        isAudioOnly: Bool? = nil
     ) {
         shared.load(
             media: media,
             autoPlay: autoPlay,
             at: startPosition,
             presentationMode: presentationMode,
-            isAudioOnly: isAudioOnly,
-            configuration: configuration
+            isAudioOnly: isAudioOnly
         )
     }
 

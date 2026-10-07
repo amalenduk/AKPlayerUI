@@ -85,40 +85,42 @@ public struct AKAdOverlayView: View {
 
                         Spacer()
 
-                        // Morphing Skip CTA Button
-                        Button(action: {
-                            if adManager.isAdSkippable {
-                                adManager.skipAd()
-                            }
-                        }) {
-                            HStack(spacing: AKSpacing.xs) {
+                        if adManager.allowsSkip {
+                            // Morphing Skip CTA Button
+                            Button(action: {
                                 if adManager.isAdSkippable {
-                                    Text("Skip Ad")
-                                        .font(typography.button)
-                                    Image(systemName: "forward.end.fill")
-                                        .font(typography.caption1.weight(.bold))
-                                } else {
-                                    Text("Skip in \(Int(adManager.adSkipCountdown))s")
-                                        .font(typography.timecodeSmall)
-                                    Image(systemName: "hourglass")
-                                        .font(typography.caption1)
+                                    adManager.skipAd()
                                 }
+                            }) {
+                                HStack(spacing: AKSpacing.xs) {
+                                    if adManager.isAdSkippable {
+                                        Text("Skip Ad")
+                                            .font(typography.button)
+                                        Image(systemName: "forward.end.fill")
+                                            .font(typography.caption1.weight(.bold))
+                                    } else {
+                                        Text("Skip in \(Int(adManager.adSkipCountdown))s")
+                                            .font(typography.timecodeSmall)
+                                        Image(systemName: "hourglass")
+                                            .font(typography.caption1)
+                                    }
+                                }
+                                .foregroundColor(adManager.isAdSkippable ? .black : .white)
+                                .padding(.horizontal, AKSpacing.md)
+                                .padding(.vertical, AKSpacing.xs)
+                                .background(
+                                    Capsule()
+                                        .fill(adManager.isAdSkippable ? Color.white : Color.black.opacity(0.65))
+                                        .overlay(
+                                            Capsule()
+                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                        )
+                                )
                             }
-                            .foregroundColor(adManager.isAdSkippable ? .black : .white)
-                            .padding(.horizontal, AKSpacing.md)
-                            .padding(.vertical, AKSpacing.xs)
-                            .background(
-                                Capsule()
-                                    .fill(adManager.isAdSkippable ? Color.white : Color.black.opacity(0.65))
-                                    .overlay(
-                                        Capsule()
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            )
+                            .buttonStyle(.plain)
+                            .disabled(!adManager.isAdSkippable)
+                            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: adManager.isAdSkippable)
                         }
-                        .buttonStyle(.plain)
-                        .disabled(!adManager.isAdSkippable)
-                        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: adManager.isAdSkippable)
                     }
                     .padding(.bottom, AKSpacing.xxl)
                     .padding(.horizontal, AKSpacing.xl)
