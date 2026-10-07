@@ -20,10 +20,6 @@ extension AKPlayerCoordinator {
         presentationMode: AKPlayerPresentationMode? = nil,
         isAudioOnly: Bool? = nil
     ) {
-        Task {
-            try? await self.player.prepare()
-        }
-        
         self.currentMedia = media
         var initialMetadata = media.metadataProvider.staticMetadata
         if initialMetadata.title == nil || initialMetadata.title?.isEmpty == true {
@@ -72,7 +68,7 @@ extension AKPlayerCoordinator {
         presentationMode: AKPlayerPresentationMode? = nil,
         isAudioOnly: Bool? = nil
     ) {
-        let isLive = url.absoluteString.contains(".m3u8") || url.absoluteString.contains("live")
+        let isLive = url.absoluteString.contains("live")
         let mediaType: AKMediaType = isLive ? .stream(isLive: true) : .clip
         let media = AKMedia(url: url, type: mediaType)
         load(media: media, presentationMode: presentationMode, isAudioOnly: isAudioOnly)
@@ -107,7 +103,7 @@ extension AKPlayerCoordinator {
     
     /// Seeks to an absolute timestamp in seconds.
     public func seek(to seconds: TimeInterval) {
-        guard capabilities.canSeek, !adManager.isAdActive else { return }
+        guard capabilities.canSeek else { return }
         
         if isLive {
             if let dvrWindow = player.currentMedia?.dvrWindow, dvrWindow.duration.seconds > 0 {
@@ -134,7 +130,11 @@ extension AKPlayerCoordinator {
         let clamped = max(0, min(seconds, duration > 0 ? duration : seconds))
         currentTime = clamped
         Task {
-            _ = await player.seek(to: .seconds(clamped), scope: .primary)
+            if player.interstitialService.integratedTimeline != nil {
+                _ = await player.seek(to: .seconds(clamped), scope: .integrated)
+            } else {
+                _ = await player.seek(to: .seconds(clamped), scope: .primary)
+            }
         }
     }
     
@@ -154,7 +154,7 @@ extension AKPlayerCoordinator {
     
     /// Relative seek forward by configured step.
     public func skipForward() {
-        guard capabilities.canSeek, !adManager.isAdActive else { return }
+        guard capabilities.canSeek else { return }
         if isLive && isAtLiveEdge {
             return
         }
@@ -163,7 +163,7 @@ extension AKPlayerCoordinator {
     
     /// Relative seek backward by configured step.
     public func skipBackward() {
-        guard capabilities.canSeek, !adManager.isAdActive else { return }
+        guard capabilities.canSeek else { return }
         seek(to: currentTime - configuration.playback.skipBackwardDuration)
     }
     

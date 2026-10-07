@@ -215,7 +215,7 @@ public struct AKVideoPlayerView: View {
                 AKSeekButton(
                     direction: .forward,
                     stepSeconds: coordinator.configuration.playback.skipForwardDuration,
-                    isEnabled: coordinator.capabilities.canSeek
+                    isEnabled: coordinator.capabilities.canSeek,
                 ) {
                     coordinator.skipForward()
                     resetHUDTimer()
@@ -242,6 +242,7 @@ public struct AKVideoPlayerView: View {
                 currentTime: coordinator.currentTime,
                 duration: coordinator.duration,
                 loadedTimeRanges: coordinator.loadedTimeRanges,
+                markers: coordinator.adManager.markers,
                 cuePoints: coordinator.adManager.cuePoints.isEmpty ? coordinator.configuration.ads.cuePoints : coordinator.adManager.cuePoints,
                 isAdActive: coordinator.adManager.isAdActive,
                 isSeekEnabled: coordinator.capabilities.canSeek,

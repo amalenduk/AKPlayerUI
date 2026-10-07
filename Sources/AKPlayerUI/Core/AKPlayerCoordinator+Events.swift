@@ -65,11 +65,13 @@ extension AKPlayerCoordinator {
             self.autoPlay = player.autoPlay
             
         case let .timeDidChange(currentTime):
+            guard player.interstitialService.integratedTimeline == nil else { return }
+            
             let sec = currentTime.seconds
             if !sec.isNaN && sec >= 0 {
                 self.currentTime = sec
                 if !chapters.isEmpty && !(activeChapter?.contains(seconds: sec) ?? false) {
-                    self.activeChapter = chapters.first { $0.contains(seconds: sec) }
+                    self.activeChapter = currentMedia?.chapterService.currentChapter(at: currentTime)
                 }
             }
             if self.isLive, let media = currentMedia {
@@ -87,6 +89,7 @@ extension AKPlayerCoordinator {
             
         case let .mediaDidChange(media):
             self.currentMedia = media
+            
         case .playerItemNotification(_):
             break
         case .boundaryReached(_):
@@ -97,8 +100,8 @@ extension AKPlayerCoordinator {
             playerIsMuted = isMuted
         case .sharePlayStateDidChange(_):
             break
-        case .commandUnavailable(_):
-            break
+        case .commandUnavailable(let reason):
+            print(reason.description)
         case .didFail(_):
             break
         default:
@@ -112,11 +115,9 @@ extension AKPlayerCoordinator {
         switch event {
         case let .loadedTimeRangesDidChange(ranges):
             self.loadedTimeRanges = ranges
-            if !self.capabilities.canSeek {
-                self.capabilities.canSeek = currentMedia?.canSeek ?? false
-            }
             
         case let .seekableTimeRangesDidChange(ranges):
+            guard player.interstitialService.integratedTimeline == nil else { return }
             if self.isLive, let last = ranges.last {
                 let dur = last.duration.seconds
                 if dur.isFinite && dur > 0 {
@@ -126,9 +127,12 @@ extension AKPlayerCoordinator {
             self.capabilities.canSeek = currentMedia?.canSeek ?? false
             
         case let .durationDidChange(dur):
-            let sec = dur.seconds
-            if !sec.isNaN && sec.isFinite && sec > 0 && !self.isLive {
-                self.duration = sec
+            guard player.interstitialService.integratedTimeline == nil else { return }
+            if !self.isLive {
+                let sec = dur.seconds
+                if !sec.isNaN && sec.isFinite && sec > 0 {
+                    self.duration = sec
+                }
             }
             
         case let .capabilityDidChange(capability, isSupported):
@@ -218,20 +222,20 @@ extension AKPlayerCoordinator {
     
     private func handleInterstitialEvent(_ event: AKInterstitialEvent) {
         switch event {
-        case .didStart:
+        case .willStart:
             let marker = player.interstitialService.currentMarker
             let currentIndex = player.interstitialService.currentItemIndex
             let totalAds = marker?.templateItemCount ?? 1
             let duration = marker?.duration ?? 0
             let skipDelay = configuration.ads.skipCountdownDuration
-
+            
             let adAllowsSeek = marker?.canSeek ?? player.interstitialService.canSeek
             var allowsSkip = configuration.ads.allowsAdSkip && adAllowsSeek
-
+            
             if duration > 0 && duration <= skipDelay {
                 allowsSkip = false
             }
-
+            
             adManager.startAdPod(
                 index: currentIndex,
                 total: totalAds,
@@ -239,9 +243,13 @@ extension AKPlayerCoordinator {
                 skipDelay: skipDelay,
                 allowsSkip: allowsSkip
             )
-
+            
+        case .didStart:
+            break
+            
         case .didFinish:
             adManager.endAdPod()
+            self.capabilities.canSeek = currentMedia?.canSeek ?? false
             
         case let .progress(progress):
             adManager.updateProgress(
@@ -254,10 +262,21 @@ extension AKPlayerCoordinator {
             adManager.markers = markers
             
         case .scheduleDidChange:
-            adManager.markers = player.interstitialService.markers
-
-        case .willStart, .playbackStateDidChange, .integratedTimeline:
             break
+            
+        case let .integratedTimeline(timelineEvent):
+            switch timelineEvent {
+            case let .timeUpdated(current, _, dur):
+                if dur > 0 {
+                    self.duration = dur
+                }
+                self.currentTime = current
+            case .segmentsUpdated, .snapshotOutOfSync:
+                break
+            }
+            
+        case let .playbackStateDidChange(state):
+            adManager.interstitialPlaybackState = state
         }
     }
 }

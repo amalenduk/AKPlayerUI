@@ -453,6 +453,7 @@ public struct AKAudioPlayerView: View {
                 currentTime: coordinator.currentTime,
                 duration: coordinator.duration,
                 loadedTimeRanges: coordinator.loadedTimeRanges,
+                markers: coordinator.adManager.markers,
                 cuePoints: coordinator.adManager.cuePoints.isEmpty ? coordinator.configuration.ads.cuePoints : coordinator.adManager.cuePoints,
                 isAdActive: coordinator.adManager.isAdActive,
                 palette: theme.palette,

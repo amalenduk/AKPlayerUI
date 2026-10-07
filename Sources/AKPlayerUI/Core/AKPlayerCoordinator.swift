@@ -106,7 +106,19 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     }
     
     public var isLive: Bool {
-        player.isLive
+        if let media = currentMedia {
+            switch media.type {
+            case let .stream(isLive):
+                if !isLive { return false }
+                return true
+            case .clip:
+                return false
+            }
+        }
+        if duration == 0 || player.currentItem?.status != .readyToPlay {
+            return false
+        }
+        return player.isLive
     }
     
     @Published public internal(set) var chapters: [AKChapter] = []
@@ -170,6 +182,9 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
         setupAdManagerCallbacks()
         bindUIState()
         startObservingPlayerEvents()
+        Task { @MainActor [weak self] in
+            try? await self?.player.prepare()
+        }
     }
     
     /// Convenience initializer supporting injected AKPlayer instances.

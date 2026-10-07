@@ -23,6 +23,7 @@ public final class AKAdManager: ObservableObject, @unchecked Sendable {
     @Published public private(set) var skipCountdownDuration: TimeInterval = 5.0
     @Published public private(set) var sponsorName: String?
     @Published public private(set) var sponsorLinkURL: URL?
+    @Published public var interstitialPlaybackState: AKInterstitialPlaybackState = .idle
 
     public var cuePoints: [TimeInterval] {
         markers.map(\.time)
