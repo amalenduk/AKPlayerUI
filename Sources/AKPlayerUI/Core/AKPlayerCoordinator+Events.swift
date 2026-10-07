@@ -269,8 +269,26 @@ extension AKPlayerCoordinator {
             case let .timeUpdated(current, _, dur):
                 if dur > 0 {
                     self.duration = dur
+                } else if self.isLive, let dvrDur = currentMedia?.dvrWindow?.duration.seconds, dvrDur > 0 {
+                    self.duration = dvrDur
                 }
                 self.currentTime = current
+                
+                if self.isLive {
+                    let threshold = currentMedia?.liveEdgeThreshold ?? 4.0
+                    let drift = max(0, self.duration - current)
+                    self.liveOffset = drift
+                    self.isAtLiveEdge = drift <= threshold
+                }
+                
+                if !player.interstitialService.isPlayingInterstitial {
+                    self.capabilities.canSeek = (currentMedia?.canSeek ?? false)
+                }
+                
+                if !chapters.isEmpty {
+                    self.activeChapter = currentMedia?.chapterService.currentChapter(at: player.currentTime)
+                }
+                
             case .segmentsUpdated, .snapshotOutOfSync:
                 break
             }
