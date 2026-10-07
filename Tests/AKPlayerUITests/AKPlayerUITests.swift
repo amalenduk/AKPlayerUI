@@ -8,7 +8,7 @@ import Testing
 
 struct AKPlayerUITests {
     @Test func testConfigurationDefaults() async throws {
-        let config = AKPlayerConfiguration.automatic
+        let config = AKPlayerUIConfiguration.automatic
         #expect(config.playback.defaultPlaybackSpeed == 1.0)
         #expect(config.playback.openDirectlyInFullScreen == true)
         #expect(config.gestures.isDoubleTapToSeekEnabled == true)

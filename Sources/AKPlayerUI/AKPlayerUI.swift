@@ -19,7 +19,7 @@ public enum AKPlayerUI {
 
     /// Active UI and playback presentation configuration.
     @MainActor
-    public static var configuration: AKPlayerConfiguration {
+    public static var configuration: AKPlayerUIConfiguration {
         get { shared.configuration }
         set { shared.configuration = newValue }
     }

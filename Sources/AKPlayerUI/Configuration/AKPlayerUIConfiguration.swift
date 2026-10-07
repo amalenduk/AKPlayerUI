@@ -1,5 +1,5 @@
 //
-//  AKPlayerConfiguration.swift
+//  AKPlayerUIConfiguration.swift
 //  AKPlayerUI
 //
 
@@ -7,7 +7,7 @@ import Foundation
 
 /// Central aggregated configuration matrix defining behavioral policies, gestures, video geometry,
 /// subtitle appearance, ad policies, and equalizer defaults for `AKPlayerUI`.
-public struct AKPlayerConfiguration: Sendable, Equatable {
+public struct AKPlayerUIConfiguration: Sendable, Equatable {
     public var playback: AKPlaybackConfiguration
     public var video: AKVideoConfiguration
     public var gestures: AKGestureConfiguration
@@ -35,15 +35,15 @@ public struct AKPlayerConfiguration: Sendable, Equatable {
     }
 
     /// Automatic adaptive baseline configuration.
-    public static let automatic = AKPlayerConfiguration()
+    public static let automatic = AKPlayerUIConfiguration()
 
     /// Configuration profile optimized for on-demand cinema and TV series.
-    public static let videoDefault = AKPlayerConfiguration(
+    public static let videoDefault = AKPlayerUIConfiguration(
         capabilities: .video
     )
 
     /// Configuration profile optimized for music and albums.
-    public static let audioDefault = AKPlayerConfiguration(
+    public static let audioDefault = AKPlayerUIConfiguration(
         playback: AKPlaybackConfiguration(
             skipBackwardDuration: 15.0,
             skipForwardDuration: 15.0,
@@ -53,12 +53,12 @@ public struct AKPlayerConfiguration: Sendable, Equatable {
     )
 
     /// Configuration profile optimized for live broadcast streams with DVR rewind window.
-    public static let liveDefault = AKPlayerConfiguration(
+    public static let liveDefault = AKPlayerUIConfiguration(
         capabilities: .liveStream
     )
 
     /// Configuration profile optimized for podcasts and spoken-word content.
-    public static let podcastDefault = AKPlayerConfiguration(
+    public static let podcastDefault = AKPlayerUIConfiguration(
         playback: AKPlaybackConfiguration(
             skipBackwardDuration: 15.0,
             skipForwardDuration: 30.0,
@@ -68,7 +68,7 @@ public struct AKPlayerConfiguration: Sendable, Equatable {
     )
 
     /// Configuration profile optimized for audiobooks.
-    public static let audiobookDefault = AKPlayerConfiguration(
+    public static let audiobookDefault = AKPlayerUIConfiguration(
         playback: AKPlaybackConfiguration(
             skipBackwardDuration: 15.0,
             skipForwardDuration: 30.0,
@@ -80,7 +80,7 @@ public struct AKPlayerConfiguration: Sendable, Equatable {
 
 import AKPlayer
 
-extension AKPlayerConfiguration {
+extension AKPlayerUIConfiguration {
     /// Converts this UI configuration into a corresponding core `AKPlayer` engine configuration.
     public func makeCorePlayerConfiguration() -> AKPlayer.Configuration {
         var coreConfig = AKPlayer.Configuration.default

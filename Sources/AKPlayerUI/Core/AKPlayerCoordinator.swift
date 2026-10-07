@@ -133,7 +133,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     @Published public internal(set) var capabilities: AKMediaCapabilities = .empty
     
     // MARK: - Configuration & Theming
-    @Published public var configuration: AKPlayerConfiguration = .automatic
+    @Published public var configuration: AKPlayerUIConfiguration = .automatic
     @Published public var theme: AKPlayerTheme = .standard
     
     // MARK: - Domain Sub-Managers (Composed)
@@ -155,7 +155,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     ///   - player: An optional pre-configured `AKPlayer` instance. If `nil`, an engine instance
     ///             is instantiated using settings bridged from `configuration`.
     public init(
-        configuration: AKPlayerConfiguration = .automatic,
+        configuration: AKPlayerUIConfiguration = .automatic,
         player: AKPlayer? = nil
     ) {
         self.configuration = configuration

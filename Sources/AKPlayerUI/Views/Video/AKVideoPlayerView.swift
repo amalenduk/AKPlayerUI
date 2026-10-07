@@ -66,7 +66,7 @@ public struct AKVideoPlayerView: View {
             )
             
             // 4. Autohiding Glass HUD Overlays
-            if isHUDVisible && !coordinator.adManager.isAdActive {
+            if isHUDVisible {
                 VStack {
                     // Top Navigation & Tool Bar
                     topBar
