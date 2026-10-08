@@ -47,7 +47,6 @@ public struct AKMoreOptionsSheet: View {
         AKAuxiliaryContainerView(
             badge: "Player Controls",
             title: "More Options",
-            subtitle: coordinator.currentTitle,
             placementMode: placementMode,
             palette: palette,
             typography: typography,

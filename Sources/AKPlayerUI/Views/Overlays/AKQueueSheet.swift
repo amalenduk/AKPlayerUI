@@ -54,7 +54,6 @@ public struct AKQueueSheet: View {
         AKAuxiliaryContainerView(
             badge: "Up Next (\(queueItems.count))",
             title: coordinator.currentTitle.isEmpty ? "Playback Queue" : coordinator.currentTitle,
-            subtitle: coordinator.currentSubtitle,
             placementMode: placementMode,
             palette: palette,
             typography: typography,

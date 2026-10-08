@@ -638,7 +638,6 @@ public struct AKAudioPlayerView: View {
                 typography: theme.typography,
                 placementMode: placement,
                 title: "10-Band Graphic Equalizer",
-                subtitle: "Digital Signal Processing • 32Hz – 16kHz",
                 onDismiss: { uiState.dismissAuxiliary() }
             )
         case .trackSelection:
@@ -656,7 +655,6 @@ public struct AKAudioPlayerView: View {
                 typography: theme.typography,
                 placementMode: placement,
                 title: "Audio Details",
-                subtitle: coordinator.currentTitle,
                 onDismiss: { uiState.dismissAuxiliary() }
             )
         case .playbackSpeed:

@@ -36,7 +36,6 @@ public struct AKPlaybackSpeedSheet: View {
         AKAuxiliaryContainerView(
             badge: "Speed Control",
             title: "Playback Speed",
-            subtitle: "Adjust playback rate multiplier from 0.25x to 2.0x",
             placementMode: placementMode,
             palette: palette,
             typography: typography,

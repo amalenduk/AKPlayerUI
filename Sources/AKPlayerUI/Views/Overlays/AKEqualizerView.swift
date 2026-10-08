@@ -15,7 +15,6 @@ public struct AKEqualizerView: View {
     public var typography: AKTypography
     public var placementMode: AKOverlayPlacementMode
     public var title: String
-    public var subtitle: String?
     public var onDismiss: (() -> Void)?
 
     public init(
@@ -24,7 +23,6 @@ public struct AKEqualizerView: View {
         typography: AKTypography = .standard,
         placementMode: AKOverlayPlacementMode = .sheet,
         title: String = "10-Band Graphic Equalizer",
-        subtitle: String? = "Digital Signal Processing • 32Hz – 16kHz",
         onDismiss: (() -> Void)? = nil
     ) {
         self.equalizer = equalizer
@@ -32,7 +30,6 @@ public struct AKEqualizerView: View {
         self.typography = typography
         self.placementMode = placementMode
         self.title = title
-        self.subtitle = subtitle
         self.onDismiss = onDismiss
     }
 
@@ -40,7 +37,6 @@ public struct AKEqualizerView: View {
         AKAuxiliaryContainerView(
             badge: "DSP Equalizer",
             title: title,
-            subtitle: subtitle,
             placementMode: placementMode,
             palette: palette,
             typography: typography,

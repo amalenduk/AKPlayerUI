@@ -16,7 +16,6 @@ import AKPlayer
 public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: View {
     public let badge: String
     public let title: String
-    public let subtitle: String?
     public let placementMode: AKOverlayPlacementMode
     public let palette: AKColorPalette
     public let typography: AKTypography
@@ -27,7 +26,6 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
     public init(
         badge: String,
         title: String,
-        subtitle: String? = nil,
         placementMode: AKOverlayPlacementMode = .sheet,
         palette: AKColorPalette = .standard,
         typography: AKTypography = .standard,
@@ -37,7 +35,6 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
     ) {
         self.badge = badge
         self.title = title
-        self.subtitle = subtitle
         self.placementMode = placementMode
         self.palette = palette
         self.typography = typography
@@ -140,13 +137,6 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
                     .font(typography.headline)
                     .foregroundColor(palette.foregroundPrimary)
                     .lineLimit(1)
-
-                if let subtitle = subtitle, !subtitle.isEmpty {
-                    Text(subtitle)
-                        .font(typography.caption1)
-                        .foregroundColor(palette.foregroundSecondary)
-                        .lineLimit(1)
-                }
             }
 
             Spacer()

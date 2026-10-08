@@ -35,7 +35,6 @@ public struct AKTrackSelectorSheet: View {
         AKAuxiliaryContainerView(
             badge: "Audio & Subtitles",
             title: coordinator.currentTitle.isEmpty ? "Track Options" : coordinator.currentTitle,
-            subtitle: coordinator.currentSubtitle,
             placementMode: placementMode,
             palette: palette,
             typography: typography,

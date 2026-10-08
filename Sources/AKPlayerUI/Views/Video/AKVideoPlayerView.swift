@@ -483,7 +483,6 @@ public struct AKVideoPlayerView: View {
                 typography: theme.typography,
                 placementMode: placement,
                 title: "10-Band Graphic Equalizer",
-                subtitle: "Digital Signal Processing • 32Hz – 16kHz",
                 onDismiss: { uiState.dismissAuxiliary() }
             )
         case .chapters:
@@ -525,7 +524,6 @@ public struct AKVideoPlayerView: View {
                 typography: theme.typography,
                 placementMode: placement,
                 title: "Media Details",
-                subtitle: coordinator.currentTitle,
                 onDismiss: { uiState.dismissAuxiliary() }
             )
         }

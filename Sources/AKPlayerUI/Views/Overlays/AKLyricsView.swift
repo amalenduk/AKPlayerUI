@@ -54,7 +54,6 @@ public struct AKLyricsView: View {
         AKAuxiliaryContainerView(
             badge: "Synced Lyrics",
             title: coordinator.currentTitle.isEmpty ? "Lyrics" : coordinator.currentTitle,
-            subtitle: coordinator.currentSubtitle,
             placementMode: placementMode,
             palette: palette,
             typography: typography,

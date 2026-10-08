@@ -40,7 +40,6 @@ public struct AKChapterSheet: View {
         AKAuxiliaryContainerView(
             badge: "Chapters (\(coordinator.chapters.count))",
             title: coordinator.currentTitle.isEmpty ? "Media Chapters" : coordinator.currentTitle,
-            subtitle: coordinator.currentSubtitle,
             placementMode: placementMode,
             palette: palette,
             typography: typography,
