@@ -6,24 +6,50 @@
 import SwiftUI
 import AKPlayer
 
-/// Interactive sheet enabling users to select audio languages and closed caption / subtitle tracks.
+// MARK: - AKTrackType Presentation Extension
+
+extension AKTrackType {
+    public var displayTitle: String {
+        switch self {
+        case .audio: return "Audio Tracks"
+        case .subtitle: return "Subtitles"
+        case .closedCaption: return "Closed Captions"
+        case .audioDescription: return "Audio Description"
+        case .videoAlternative: return "Alternative Angles"
+        }
+    }
+
+    public var iconName: String {
+        switch self {
+        case .audio: return "speaker.wave.2.fill"
+        case .subtitle: return "captions.bubble.fill"
+        case .closedCaption: return "captions.bubble"
+        case .audioDescription: return "person.wave.2.fill"
+        case .videoAlternative: return "video.badge.plus"
+        }
+    }
+}
+
+/// Interactive sheet enabling users to select media track options for a specific AKTrackType
+/// (e.g., .audio, .subtitle, .closedCaption).
 /// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKTrackSelectorSheet: View {
+    public let trackType: AKTrackType
     @ObservedObject public var coordinator: AKPlayerCoordinator
     public var palette: AKColorPalette
     public var typography: AKTypography
     public var placementMode: AKOverlayPlacementMode
     public var onDismiss: (() -> Void)?
 
-    @State private var selectedTab: Int = 0 // 0 = Audio, 1 = Subtitles
-
     public init(
+        trackType: AKTrackType = .subtitle,
         coordinator: AKPlayerCoordinator = .shared,
         palette: AKColorPalette = .standard,
         typography: AKTypography = .standard,
         placementMode: AKOverlayPlacementMode = .sheet,
         onDismiss: (() -> Void)? = nil
     ) {
+        self.trackType = trackType
         self.coordinator = coordinator
         self.palette = palette
         self.typography = typography
@@ -31,104 +57,147 @@ public struct AKTrackSelectorSheet: View {
         self.onDismiss = onDismiss
     }
 
+    private var availableTracks: [AKMediaTrackOption] {
+        coordinator.availableTracks(for: trackType)
+    }
+
+    private var offTrack: AKMediaTrackOption? {
+        availableTracks.first(where: { $0.isOff })
+    }
+
+    private var contentTracks: [AKMediaTrackOption] {
+        availableTracks.filter { !$0.isOff }
+    }
+
+    private var selectedTrack: AKMediaTrackOption? {
+        coordinator.selectedTrack(for: trackType)
+    }
+
+    private var offSubtitle: String {
+        switch trackType {
+        case .subtitle:
+            return "Disable subtitles"
+        case .closedCaption:
+            return "Disable closed captions"
+        case .audio, .audioDescription:
+            return "Mute audio"
+        default:
+            return "None"
+        }
+    }
+
+    private var offIconName: String {
+        switch trackType {
+        case .audio, .audioDescription:
+            return "speaker.slash"
+        default:
+            return "slash.circle"
+        }
+    }
+
     public var body: some View {
         AKAuxiliaryContainerView(
-            badge: "Audio & Subtitles",
-            title: coordinator.currentTitle.isEmpty ? "Track Options" : coordinator.currentTitle,
+            badge: trackType.displayTitle,
+            title: coordinator.currentTitle.isEmpty ? trackType.displayTitle : coordinator.currentTitle,
             placementMode: placementMode,
             palette: palette,
             typography: typography,
             onDismiss: onDismiss,
             content: {
-                VStack(spacing: AKSpacing.zero) {
-                    // Segmented Tab Picker (Audio vs Subtitles)
-                    pickerTabs
-                        .padding(.horizontal, AKSpacing.lg)
-                        .padding(.top, AKSpacing.md)
-                        .padding(.bottom, AKSpacing.sm)
+                ScrollView(.vertical, showsIndicators: true) {
+                    LazyVStack(spacing: AKSpacing.xs) {
+                        if availableTracks.isEmpty {
+                            emptyState(
+                                title: "No Extra \(trackType.displayTitle)",
+                                subtitle: "Only the default stream option is available."
+                            )
+                        } else {
+                            // 1. Off Row (Distinct control at top if supported)
+                            if let off = offTrack {
+                                let isOffSelected = selectedTrack == nil || selectedTrack?.isOff == true
+                                offRow(track: off, isSelected: isOffSelected) {
+                                    coordinator.selectTrack(off, for: trackType)
+                                }
 
-                    // Track List
-                    if selectedTab == 0 {
-                        audioTrackList
-                    } else {
-                        subtitleTrackList
+                                if !contentTracks.isEmpty {
+                                    sectionDivider(title: "AVAILABLE TRACKS")
+                                }
+                            }
+
+                            // 2. Available Content / Language Tracks
+                            ForEach(contentTracks) { track in
+                                let isSelected = track.id == selectedTrack?.id
+                                trackRow(track: track, isSelected: isSelected) {
+                                    coordinator.selectTrack(track, for: trackType)
+                                }
+                            }
+                        }
                     }
+                    .padding(.horizontal, AKSpacing.lg)
+                    .padding(.top, AKSpacing.md)
+                    .padding(.bottom, AKSpacing.xxl)
                 }
             }
         )
     }
 
-    // MARK: - Subviews
+    private func offRow(track: AKMediaTrackOption, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: AKSpacing.sm) {
+                Image(systemName: offIconName)
+                    .font(typography.subheadline.weight(.semibold))
+                    .foregroundColor(isSelected ? palette.accent : palette.foregroundTertiary)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        Circle()
+                            .fill(isSelected ? palette.accent.opacity(0.18) : Color.white.opacity(0.05))
+                    )
 
-    private var pickerTabs: some View {
-        HStack(spacing: AKSpacing.zero) {
-            Button(action: { withAnimation { selectedTab = 0 } }) {
-                Text("Audio Tracks")
-                    .font(typography.button)
-                    .foregroundColor(selectedTab == 0 ? palette.foregroundPrimary : palette.foregroundTertiary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AKSpacing.xs)
-                    .background(selectedTab == 0 ? Color.white.opacity(0.12) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            .buttonStyle(.plain)
+                VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
+                    Text(track.title)
+                        .font(isSelected ? typography.subheadline.weight(.semibold) : typography.subheadline.weight(.medium))
+                        .foregroundColor(isSelected ? palette.foregroundPrimary : palette.foregroundSecondary)
 
-            Button(action: { withAnimation { selectedTab = 1 } }) {
-                Text("Subtitles")
-                    .font(typography.button)
-                    .foregroundColor(selectedTab == 1 ? palette.foregroundPrimary : palette.foregroundTertiary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, AKSpacing.xs)
-                    .background(selectedTab == 1 ? Color.white.opacity(0.12) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    Text(offSubtitle)
+                        .font(typography.badgeSmall)
+                        .foregroundColor(palette.foregroundTertiary)
+                }
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(typography.button)
+                        .foregroundColor(palette.accent)
+                }
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.vertical, AKSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isSelected ? palette.accent.opacity(0.15) : Color.white.opacity(0.04))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(isSelected ? palette.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
+            )
         }
-        .padding(AKSpacing.xxs)
-        .background(Color.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .buttonStyle(.plain)
     }
 
-    private var audioTrackList: some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            LazyVStack(spacing: AKSpacing.xs) {
-                if coordinator.availableAudioTracks.isEmpty {
-                    emptyState(title: "No Extra Audio Tracks", subtitle: "Only the default stereo/surround mix is available.")
-                } else {
-                    ForEach(coordinator.availableAudioTracks) { track in
-                        let isSelected = track.id == coordinator.selectedAudioTrack?.id
-                        trackRow(track: track, isSelected: isSelected) {
-                            coordinator.selectAudioTrack(track)
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, AKSpacing.lg)
-            .padding(.top, AKSpacing.xs)
-            .padding(.bottom, AKSpacing.xxl)
-        }
-    }
+    private func sectionDivider(title: String) -> some View {
+        HStack(spacing: AKSpacing.sm) {
+            Text(title)
+                .font(typography.badgeSmall.weight(.bold))
+                .foregroundColor(palette.foregroundTertiary)
+                .kerning(1.2)
 
-    private var subtitleTrackList: some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            LazyVStack(spacing: AKSpacing.xs) {
-                // "Off" Option
-                let isOff = coordinator.selectedSubtitleTrack == nil || coordinator.selectedSubtitleTrack?.isOff == true
-                trackRow(track: AKMediaTrackOption.off, isSelected: isOff) {
-                    coordinator.selectSubtitleTrack(AKMediaTrackOption.off)
-                }
-
-                ForEach(coordinator.availableSubtitleTracks) { track in
-                    let isSelected = track.id == coordinator.selectedSubtitleTrack?.id
-                    trackRow(track: track, isSelected: isSelected) {
-                        coordinator.selectSubtitleTrack(track)
-                    }
-                }
-            }
-            .padding(.horizontal, AKSpacing.lg)
-            .padding(.top, AKSpacing.xs)
-            .padding(.bottom, AKSpacing.xxl)
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
         }
+        .padding(.top, AKSpacing.sm)
+        .padding(.bottom, AKSpacing.xxxs)
     }
 
     private func trackRow(track: AKMediaTrackOption, isSelected: Bool, action: @escaping () -> Void) -> some View {
@@ -171,7 +240,7 @@ public struct AKTrackSelectorSheet: View {
     private func emptyState(title: String, subtitle: String) -> some View {
         VStack(spacing: AKSpacing.sm) {
             Spacer(minLength: AKSpacing.xxxl)
-            Image(systemName: "waveform.slash")
+            Image(systemName: trackType == .audio ? "waveform.slash" : "captions.bubble")
                 .font(.system(size: 40))
                 .foregroundColor(palette.foregroundTertiary)
             Text(title)
@@ -188,7 +257,12 @@ public struct AKTrackSelectorSheet: View {
 
 // MARK: - SwiftUI Preview
 
-#Preview("Track Selector Sheet") {
-    AKTrackSelectorSheet(coordinator: .previewMock)
+#Preview("Audio Track Selector") {
+    AKTrackSelectorSheet(trackType: .audio, coordinator: .previewMock)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Subtitle Track Selector") {
+    AKTrackSelectorSheet(trackType: .subtitle, coordinator: .previewMock)
         .preferredColorScheme(.dark)
 }

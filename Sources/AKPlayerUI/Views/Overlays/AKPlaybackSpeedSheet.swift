@@ -145,12 +145,13 @@ public struct AKPlaybackSpeedSheet: View {
     // MARK: - Helpers
 
     public static func format(rate: Float) -> String {
-        if rate.truncatingRemainder(dividingBy: 1) == 0 {
-            return "\(Int(rate))x"
-        } else if (rate * 10).truncatingRemainder(dividingBy: 1) == 0 {
-            return String(format: "%.1fx", rate)
+        let safeRate = rate > 0 ? rate : 1.0
+        if safeRate.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(safeRate))x"
+        } else if (safeRate * 10).truncatingRemainder(dividingBy: 1) == 0 {
+            return String(format: "%.1fx", safeRate)
         } else {
-            return String(format: "%.2fx", rate)
+            return String(format: "%.2fx", safeRate)
         }
     }
 

@@ -90,22 +90,27 @@ public struct AKAudioPlayerView: View {
 
             // 3. SIDE DRAWER MODE: Slide-in Floating Frosted Glass Panel
             if isDrawerActive, let activeOverlay = uiState.activeInlineOverlay {
-                // Dimmed Backdrop
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        coordinator.dismissAuxiliary()
-                    }
-                    .transition(.opacity)
-
-                // Trailing Drawer Panel (Restricted to safe area height - non-full-screen)
                 GeometryReader { geo in
-                    HStack(spacing: 0) {
-                        Spacer()
+                    let isLandscape = geo.size.width > geo.size.height
+                    ZStack(alignment: .trailing) {
+                        // Dimmed Backdrop
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                coordinator.dismissAuxiliary()
+                            }
+                            .transition(.opacity)
 
-                        auxiliaryOverlayView(for: activeOverlay, placement: .sideDrawer)
-                            .frame(width: min(geo.size.width * 0.88, 380))
+                        // Trailing Drawer Panel (Ignores safe area ONLY in landscape)
+                        HStack(spacing: 0) {
+                            Spacer()
+
+                            auxiliaryOverlayView(for: activeOverlay, placement: .sideDrawer)
+                                .frame(width: min(geo.size.width * 0.88, isLandscape ? 400 : 380))
+                                .frame(maxHeight: .infinity)
+                        }
                     }
+                    .ignoresSafeArea(edges: isLandscape ? .all : [])
                 }
                 .transition(.move(edge: .trailing))
             }
@@ -599,7 +604,7 @@ public struct AKAudioPlayerView: View {
             return [.height(310)]
         case .moreOptions:
             return [.height(410), .medium]
-        case .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
+        case .audioTracks, .subtitleTracks, .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
             return [.fraction(0.68), .large]
         }
     }
@@ -640,8 +645,18 @@ public struct AKAudioPlayerView: View {
                 title: "10-Band Graphic Equalizer",
                 onDismiss: { uiState.dismissAuxiliary() }
             )
-        case .trackSelection:
+        case .audioTracks:
             AKTrackSelectorSheet(
+                trackType: .audio,
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: placement,
+                onDismiss: { uiState.dismissAuxiliary() }
+            )
+        case .subtitleTracks, .trackSelection:
+            AKTrackSelectorSheet(
+                trackType: .subtitle,
                 coordinator: coordinator,
                 palette: theme.palette,
                 typography: theme.typography,

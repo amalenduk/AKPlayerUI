@@ -78,9 +78,14 @@ public struct AKMoreOptionsSheet: View {
 
     private var actionGrid: some View {
         LazyVGrid(columns: columns, spacing: AKSpacing.lg) {
-            // Audio & Subtitles
-            gridButton(title: "Tracks", icon: "waveform.badge.magnifyingglass") {
-                onSelectAction?(.trackSelection)
+            // Audio Tracks
+            gridButton(title: "Audio", icon: "speaker.wave.2.fill") {
+                onSelectAction?(.audioTracks)
+            }
+
+            // Subtitles
+            gridButton(title: "Subtitles", icon: "captions.bubble.fill") {
+                onSelectAction?(.subtitleTracks)
             }
 
             // Equalizer

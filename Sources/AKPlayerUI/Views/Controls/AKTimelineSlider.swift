@@ -24,6 +24,7 @@ public struct AKTimelineSlider: View {
     public let liveOffset: TimeInterval
     public let enableSnapping: Bool
     public let enforceRestrictions: Bool
+    public let showsTimeLabels: Bool
     
     public let onJumpToLive: (() -> Void)?
     public let onScrubBegan: (() -> Void)?
@@ -34,6 +35,7 @@ public struct AKTimelineSlider: View {
     @State private var dragPosition: Double = 0.0
     @State private var hoveredMarker: AKInterstitialMarker?
     @State private var isRestrictedAtMarker: Bool = false
+    @State private var showsRemainingTime: Bool = true
     
     @Environment(\.akPlayerTheme) private var theme
     
@@ -51,6 +53,7 @@ public struct AKTimelineSlider: View {
         liveOffset: TimeInterval = 0,
         enableSnapping: Bool = true,
         enforceRestrictions: Bool = true,
+        showsTimeLabels: Bool = true,
         palette: AKColorPalette = .standard,
         typography: AKTypography = .standard,
         onJumpToLive: (() -> Void)? = nil,
@@ -71,6 +74,7 @@ public struct AKTimelineSlider: View {
         self.liveOffset = liveOffset
         self.enableSnapping = enableSnapping
         self.enforceRestrictions = enforceRestrictions
+        self.showsTimeLabels = showsTimeLabels
         self.onJumpToLive = onJumpToLive
         self.onScrubBegan = onScrubBegan
         self.onScrubChanged = onScrubChanged
@@ -134,7 +138,9 @@ public struct AKTimelineSlider: View {
             }
             
             // Labels Row
-            labelsRow
+            if showsTimeLabels {
+                labelsRow
+            }
         }
     }
     
@@ -203,7 +209,7 @@ public struct AKTimelineSlider: View {
             )
             #endif
         }
-        .frame(height: 32)
+        .frame(height: 20)
     }
     
     // MARK: - Subviews
@@ -485,11 +491,32 @@ public struct AKTimelineSlider: View {
                         .font(theme.typography.badge)
                         .foregroundColor(theme.palette.adActiveProgress)
                 } else if duration > 0 {
-                    Text("-\(formatTime(max(0, duration - displayTime)))")
-                        .font(theme.typography.timecodeSmall)
-                        .foregroundColor(theme.palette.textSecondary)
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            showsRemainingTime.toggle()
+                        }
+                    }) {
+                        Text(rightTimeText)
+                            .font(theme.typography.timecodeSmall)
+                            .foregroundColor(theme.palette.textSecondary)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
+        }
+    }
+
+    private var rightTimeText: String {
+        if showsRemainingTime {
+            let remaining = max(0, duration - displayTime)
+            if Int(remaining.rounded()) <= 0 {
+                return formatTime(0)
+            } else {
+                return "-\(formatTime(remaining))"
+            }
+        } else {
+            return formatTime(duration)
         }
     }
 

@@ -22,7 +22,7 @@ public final class AKPlayerUIState: ObservableObject {
     /// Currently active in-player overlay (inline content canvas or side drawer panel).
     @Published public var activeInlineOverlay: AKPlayerAuxiliarySheet? = nil
 
-    public init(placement: AKOverlayPlacementMode = .inline) {
+    public init(placement: AKOverlayPlacementMode = .sideDrawer) {
         self.overlayPlacement = placement
     }
 

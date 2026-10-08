@@ -233,7 +233,40 @@ extension AKPlayerCoordinator {
         uiState.dismissSheet()
     }
     
-    // MARK: - Track Selection Commands (AKMediaTrackOption)
+    // MARK: - Track Selection Queries & Commands (AKMediaTrackOption)
+    
+    /// Returns the available media tracks for a given track type.
+    public func availableTracks(for type: AKTrackType) -> [AKMediaTrackOption] {
+        switch type {
+        case .audio:
+            return availableAudioTracks
+        case .subtitle:
+            return availableSubtitleTracks
+        case .closedCaption:
+            return availableClosedCaptionTracks
+        case .audioDescription:
+            return availableAudioDescriptionTracks
+        case .videoAlternative:
+            return availableVideoAlternativeTracks
+        }
+    }
+
+    /// Returns the currently selected media track option for a given track type.
+    public func selectedTrack(for type: AKTrackType) -> AKMediaTrackOption? {
+        switch type {
+        case .audio:
+            return selectedAudioTrack
+        case .subtitle:
+            return selectedSubtitleTrack
+        case .closedCaption:
+            return selectedClosedCaptionTrack
+        case .audioDescription:
+            return selectedAudioDescriptionTrack
+        case .videoAlternative:
+            return selectedVideoAlternativeTrack
+        }
+    }
+
     
     /// Selects a track option for any supported track type.
     public func selectTrack(_ option: AKMediaTrackOption?, for type: AKTrackType) {

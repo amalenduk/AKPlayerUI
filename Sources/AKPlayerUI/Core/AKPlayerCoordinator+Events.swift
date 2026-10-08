@@ -102,7 +102,9 @@ extension AKPlayerCoordinator {
             }
             
         case let .playbackRateDidChange(newRate, _):
-            self.playbackRate = newRate.rate
+            if newRate != .paused && newRate.rate > 0 {
+                self.playbackRate = newRate.rate
+            }
             
         case .didReachEnd:
             if configuration.playback.autoplayNextInQueue {

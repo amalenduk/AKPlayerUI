@@ -76,45 +76,50 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
     }
 
     // MARK: - Side Drawer Layout
-    // Floating elevated panel restricted to safe area height (non-full-height card)
+    // Edge-to-edge panel in landscape; safe-area respected panel in portrait.
     private var drawerLayout: some View {
-        VStack(spacing: AKSpacing.zero) {
-            headerBar(isDrawer: true)
-                .padding(.horizontal, AKSpacing.lg)
-                .padding(.top, AKSpacing.md)
-                .padding(.bottom, AKSpacing.sm)
+        GeometryReader { geo in
+            let isLandscape = geo.size.width > geo.size.height
+            VStack(spacing: AKSpacing.zero) {
+                headerBar(isDrawer: true)
+                    .padding(.horizontal, AKSpacing.lg)
+                    .padding(.top, AKSpacing.md)
+                    .padding(.bottom, AKSpacing.sm)
+                    .safeAreaPadding(isLandscape ? [.top, .trailing] : [])
 
-            Divider()
-                .background(palette.glassBorder.opacity(0.4))
+                Divider()
+                    .background(palette.glassBorder.opacity(0.4))
 
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.bottom, AKSpacing.md)
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .safeAreaPadding(isLandscape ? [.bottom, .trailing] : [])
+                    .padding(.bottom, AKSpacing.md)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                palette.surface
+            )
+            .clipShape(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 24,
+                    bottomLeadingRadius: 24,
+                    bottomTrailingRadius: isLandscape ? 0 : 24,
+                    topTrailingRadius: isLandscape ? 0 : 24,
+                    style: .continuous
+                )
+            )
+            .overlay(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 24,
+                    bottomLeadingRadius: 24,
+                    bottomTrailingRadius: isLandscape ? 0 : 24,
+                    topTrailingRadius: isLandscape ? 0 : 24,
+                    style: .continuous
+                )
+                .stroke(palette.glassBorder, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.55), radius: 28, x: -10, y: 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            palette.surface
-        )
-        .clipShape(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 24,
-                bottomLeadingRadius: 24,
-                bottomTrailingRadius: 0,
-                topTrailingRadius: 0,
-                style: .continuous
-            )
-        )
-        .overlay(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 24,
-                bottomLeadingRadius: 24,
-                bottomTrailingRadius: 0,
-                topTrailingRadius: 0,
-                style: .continuous
-            )
-            .stroke(palette.glassBorder, lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.55), radius: 28, x: -10, y: 0)
     }
 
     // MARK: - Inline Layout

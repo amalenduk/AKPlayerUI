@@ -11,6 +11,8 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
     case lyrics
     case equalizer
     case chapters
+    case audioTracks
+    case subtitleTracks
     case trackSelection
     case details
     case playbackSpeed
@@ -24,6 +26,8 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
         case .lyrics:         return "Lyrics"
         case .equalizer:      return "10-Band Equalizer"
         case .chapters:       return "Chapters"
+        case .audioTracks:    return "Audio Tracks"
+        case .subtitleTracks: return "Subtitles"
         case .trackSelection: return "Audio & Subtitles"
         case .details:        return "Media Information"
         case .playbackSpeed:  return "Playback Speed"
@@ -37,6 +41,8 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
         case .lyrics:         return "quote.bubble"
         case .equalizer:      return "slider.vertical.3"
         case .chapters:       return "bookmark"
+        case .audioTracks:    return "speaker.wave.2.fill"
+        case .subtitleTracks: return "captions.bubble.fill"
         case .trackSelection: return "waveform.badge.magnifyingglass"
         case .details:        return "info.circle"
         case .playbackSpeed:  return "speedometer"
