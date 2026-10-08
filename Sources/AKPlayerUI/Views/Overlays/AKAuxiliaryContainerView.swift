@@ -68,13 +68,13 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
                 .padding(.bottom, AKSpacing.sm)
 
             Divider()
-                .background(Color.white.opacity(0.08))
+                .background(palette.glassBorder.opacity(0.4))
 
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(
-            Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.98)
+            palette.surface
         )
     }
 
@@ -88,7 +88,7 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
                 .padding(.bottom, AKSpacing.sm)
 
             Divider()
-                .background(Color.white.opacity(0.08))
+                .background(palette.glassBorder.opacity(0.4))
 
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -96,7 +96,7 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.97)
+            palette.surface
         )
         .clipShape(
             UnevenRoundedRectangle(
@@ -115,7 +115,7 @@ public struct AKAuxiliaryContainerView<HeaderTrailing: View, Content: View>: Vie
                 topTrailingRadius: 0,
                 style: .continuous
             )
-            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            .stroke(palette.glassBorder, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.55), radius: 28, x: -10, y: 0)
     }

@@ -160,9 +160,9 @@ public struct AKVideoPlayerView: View {
             }) {
                 Image(systemName: "chevron.down")
                     .font(theme.typography.button)
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.palette.textPrimary)
                     .frame(width: 40, height: 40)
-                    .background(Circle().fill(Color.black.opacity(0.4)))
+                    .akGlassCircle()
             }
             .buttonStyle(.plain)
             
@@ -235,7 +235,8 @@ public struct AKVideoPlayerView: View {
             }
             
             // Play / Pause Central Button
-            AKPlayPauseButton(state: coordinator.state, autoPlay: coordinator.autoPlay) {
+            AKPlayPauseButton(state: coordinator.state,
+                              autoPlay: coordinator.autoPlay) {
                 coordinator.player.togglePlayPause()
             }
             
@@ -314,10 +315,10 @@ public struct AKVideoPlayerView: View {
                             Text(coordinator.aspectRatio.rawValue)
                                 .font(theme.typography.badgeSmall)
                         }
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundColor(theme.palette.textPrimary.opacity(0.85))
                         .padding(.horizontal, AKSpacing.xs)
                         .padding(.vertical, AKSpacing.xxs)
-                        .background(Capsule().fill(Color.white.opacity(0.12)))
+                        .akGlassPill()
                     }
                 }
             }
@@ -330,9 +331,9 @@ public struct AKVideoPlayerView: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(theme.typography.button)
-                .foregroundColor(.white)
+                .foregroundColor(theme.palette.textPrimary)
                 .frame(width: 36, height: 36)
-                .background(Circle().fill(Color.black.opacity(0.4)))
+                .akGlassCircle()
         }
         .buttonStyle(.plain)
     }

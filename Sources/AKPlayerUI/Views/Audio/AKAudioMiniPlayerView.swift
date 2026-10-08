@@ -52,13 +52,13 @@ public struct AKAudioMiniPlayerView: View {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(Color.white.opacity(0.12))
+                        .fill(theme.palette.progressRailRemaining)
                         .frame(height: 2.5)
 
                     Rectangle()
                         .fill(
                             coordinator.adManager.isAdActive ? theme.palette.adActiveProgress :
-                                (coordinator.isLive ? Color.red : theme.palette.accent)
+                                (coordinator.isLive ? theme.palette.liveBadge : theme.palette.progressRailFill)
                         )
                         .frame(width: proxy.size.width * CGFloat(progressRatio), height: 2.5)
                         .animation(.linear(duration: 0.25), value: progressRatio)
@@ -67,16 +67,30 @@ public struct AKAudioMiniPlayerView: View {
             .frame(height: 2.5)
         }
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(red: 0.12, green: 0.12, blue: 0.16).opacity(0.96))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            ZStack {
+                if let mat = theme.materials.materialStyle.material {
+                    RoundedRectangle(cornerRadius: theme.materials.cardCornerRadius, style: .continuous)
+                        .fill(mat)
+                }
+                RoundedRectangle(cornerRadius: theme.materials.cardCornerRadius, style: .continuous)
+                    .fill(theme.palette.surface)
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: theme.materials.cardCornerRadius, style: .continuous)
+                .stroke(
+                    theme.palette.glassBorder.opacity(theme.materials.glassBorderOpacity),
+                    lineWidth: theme.materials.glassBorderWidth
                 )
-                .shadow(color: Color.black.opacity(0.35), radius: 12, x: 0, y: 4)
+        )
+        .shadow(
+            color: Color.black.opacity(theme.materials.shadowOpacity),
+            radius: theme.materials.shadowRadius,
+            x: 0,
+            y: theme.materials.shadowY
         )
         // CRITICAL: Continuous clipping so progress bar cannot bleed outside rounded corners
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: theme.materials.cardCornerRadius, style: .continuous))
         .padding(.horizontal, AKSpacing.sm)
     }
 

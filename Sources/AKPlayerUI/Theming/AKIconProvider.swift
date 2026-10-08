@@ -9,10 +9,13 @@ import Foundation
 public struct AKIconProvider: Sendable, Equatable {
     public var play: String
     public var pause: String
+    public var reload: String
     public var skipBackward: String
     public var skipForward: String
     public var stepBackward: String
     public var stepForward: String
+    public var nextTrack: String
+    public var previousTrack: String
     public var speed: String
     public var airPlay: String
     public var pictureInPicture: String
@@ -35,10 +38,13 @@ public struct AKIconProvider: Sendable, Equatable {
     public init(
         play: String = "play.fill",
         pause: String = "pause.fill",
+        reload: String = "arrow.trianglehead.clockwise.rotate.90",
         skipBackward: String = "gobackward",
         skipForward: String = "goforward",
         stepBackward: String = "backward.frame.fill",
         stepForward: String = "forward.frame.fill",
+        nextTrack: String = "forward.end.fill",
+        previousTrack: String = "backward.end.fill",
         speed: String = "gauge.with.needle",
         airPlay: String = "airplayvideo",
         pictureInPicture: String = "pip.enter",
@@ -60,10 +66,13 @@ public struct AKIconProvider: Sendable, Equatable {
     ) {
         self.play = play
         self.pause = pause
+        self.reload = reload
         self.skipBackward = skipBackward
         self.skipForward = skipForward
         self.stepBackward = stepBackward
         self.stepForward = stepForward
+        self.nextTrack = nextTrack
+        self.previousTrack = previousTrack
         self.speed = speed
         self.airPlay = airPlay
         self.pictureInPicture = pictureInPicture

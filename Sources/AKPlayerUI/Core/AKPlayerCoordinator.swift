@@ -146,7 +146,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     
     // MARK: - Configuration & Theming
     @Published public var configuration: AKPlayerUIConfiguration = .automatic
-    @Published public var theme: AKPlayerTheme = .standard
+    @Published public var theme: AKPlayerTheme = .appleMusic
     
     // MARK: - Domain Sub-Managers (Composed)
     public let equalizer: AKEqualizerManager

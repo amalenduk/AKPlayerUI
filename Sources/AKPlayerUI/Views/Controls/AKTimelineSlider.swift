@@ -167,7 +167,7 @@ public struct AKTimelineSlider: View {
                 let progressWidth = max(0, width * CGFloat(effectiveFraction))
                 Capsule()
                     .fill(
-                        isLive ? Color.red : theme.palette.accent
+                        isLive ? theme.palette.liveBadge : theme.palette.progressRailFill
                     )
                     .frame(width: progressWidth, height: trackHeight)
                     .position(x: progressWidth / 2, y: centerY)
@@ -332,8 +332,14 @@ public struct AKTimelineSlider: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color.black.opacity(0.85))
-        .cornerRadius(6)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(theme.palette.hudBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(theme.palette.glassBorder, lineWidth: theme.materials.glassBorderWidth)
+                )
+        )
         .position(x: xPosition, y: -16)
     }
     
@@ -451,7 +457,7 @@ public struct AKTimelineSlider: View {
                     // DVR Live stream: left side shows stream elapsed or current position
                     Text(effectiveLiveEdge ? "LIVE BROADCAST" : "-\(formatOffset(currentLiveOffset))")
                         .font(theme.typography.timecodeSmall)
-                        .foregroundColor(effectiveLiveEdge ? theme.palette.textSecondary : theme.palette.accent)
+                        .foregroundColor(effectiveLiveEdge ? theme.palette.textSecondary : theme.palette.liveBadge)
                     
                     Spacer()
                     

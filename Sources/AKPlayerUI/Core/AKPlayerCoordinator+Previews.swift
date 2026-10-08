@@ -20,6 +20,7 @@ extension AKPlayerCoordinator {
         coordinator.state = .playing
         coordinator.presentationMode = .fullScreen
         coordinator.capabilities = .fullVideo
+        coordinator.theme = .appleMusic
         coordinator.adManager.markers = [
             AKInterstitialMarker(time: 300, duration: 15, title: "Ad 1"),
             AKInterstitialMarker(time: 1800, duration: 30, title: "Ad 2"),

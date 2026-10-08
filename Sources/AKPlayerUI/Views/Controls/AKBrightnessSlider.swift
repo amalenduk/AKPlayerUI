@@ -60,12 +60,27 @@ public struct AKBrightnessSlider: View {
         .padding(.vertical, AKSpacing.sm)
         .padding(.horizontal, isCompact ? AKSpacing.xs : AKSpacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.black.opacity(0.65))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+            ZStack {
+                if let mat = theme.materials.materialStyle.material {
+                    RoundedRectangle(cornerRadius: theme.materials.controlCornerRadius)
+                        .fill(mat)
+                }
+                RoundedRectangle(cornerRadius: theme.materials.controlCornerRadius)
+                    .fill(theme.palette.hudBackground)
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: theme.materials.controlCornerRadius)
+                .stroke(
+                    theme.palette.glassBorder.opacity(theme.materials.glassBorderOpacity),
+                    lineWidth: theme.materials.glassBorderWidth
                 )
+        )
+        .shadow(
+            color: Color.black.opacity(theme.materials.shadowOpacity),
+            radius: theme.materials.shadowRadius,
+            x: 0,
+            y: theme.materials.shadowY
         )
     }
 }

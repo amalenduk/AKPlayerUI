@@ -310,6 +310,23 @@ public struct AKVideoGestureOverlay: View {
         }
         .onAppear {
             syncSystemValues()
+            AKSystemMediaDeviceManager.shared.onVolumeChanged = { newVolume in
+                currentVolume = newVolume
+                onVolumeChanged(newVolume)
+
+                // When hardware side volume buttons are pressed, display custom volume slider
+                if panStartVolume == nil {
+                    hudDismissTask?.cancel()
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isShowingBrightnessHUD = false
+                        isShowingVolumeHUD = true
+                    }
+                    scheduleSliderDismissal()
+                }
+            }
+        }
+        .onDisappear {
+            AKSystemMediaDeviceManager.shared.onVolumeChanged = nil
         }
     }
 

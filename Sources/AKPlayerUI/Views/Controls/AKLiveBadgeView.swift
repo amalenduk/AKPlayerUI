@@ -34,7 +34,7 @@ public struct AKLiveBadgeView: View {
         }) {
             HStack(spacing: AKSpacing.xs) {
                 Circle()
-                    .fill(isAtLiveEdge ? Color.red : Color.gray)
+                    .fill(isAtLiveEdge ? theme.palette.liveBadge : Color.gray)
                     .frame(width: AKSpacing.xs, height: AKSpacing.xs)
                     .scaleEffect(isAtLiveEdge && isPulsing ? 1.25 : 1.0)
                     .opacity(isAtLiveEdge && isPulsing ? 0.7 : 1.0)
@@ -47,11 +47,14 @@ public struct AKLiveBadgeView: View {
             .padding(.vertical, AKSpacing.xxs)
             .background(
                 Capsule()
-                    .fill(isAtLiveEdge ? Color.red.opacity(0.25) : Color.white.opacity(0.12))
+                    .fill(isAtLiveEdge ? theme.palette.liveBadge.opacity(0.25) : theme.palette.glassFill)
             )
             .overlay(
                 Capsule()
-                    .stroke(isAtLiveEdge ? Color.red.opacity(0.6) : Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(
+                        isAtLiveEdge ? theme.palette.liveBadge.opacity(0.6) : theme.palette.glassBorder,
+                        lineWidth: theme.materials.glassBorderWidth
+                    )
             )
         }
         .buttonStyle(.plain)

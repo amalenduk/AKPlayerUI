@@ -22,11 +22,16 @@ public final class AKSystemMediaDeviceManager {
     #if os(iOS)
     private var volumeSlider: UISlider?
     private var volumeView: MPVolumeView?
+    private var volumeObservation: NSKeyValueObservation?
     #endif
+
+    /// Callback invoked when hardware side buttons or software volume changes (0.0 ... 1.0).
+    public var onVolumeChanged: ((Float) -> Void)?
     
     private init() {
         #if os(iOS)
         setupVolumeControl()
+        startVolumeObservation()
         #endif
     }
     
@@ -51,6 +56,17 @@ public final class AKSystemMediaDeviceManager {
             .first(where: { $0.activationState == .foregroundActive }),
            let window = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first {
             window.addSubview(view)
+        }
+    }
+
+    private func startVolumeObservation() {
+        let session = AVAudioSession.sharedInstance()
+        try? session.setActive(true)
+        volumeObservation = session.observe(\.outputVolume, options: [.new]) { [weak self] _, change in
+            guard let newVol = change.newValue else { return }
+            Task { @MainActor [weak self] in
+                self?.onVolumeChanged?(newVol)
+            }
         }
     }
     #endif

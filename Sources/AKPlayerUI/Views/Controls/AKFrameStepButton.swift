@@ -5,47 +5,42 @@
 
 import SwiftUI
 
-public enum AKStepDirection: Sendable {
+public enum AKStepDirection: Sendable, Equatable {
     case backward
     case forward
 }
 
 /// Single Responsibility: Displays single-frame stepping control querying media capabilities.
-/// Styled consistently with `AKControlButtonStyle` driven directly by `theme.buttonStyle`.
+/// Backed directly by `AKTransportButton` and styled consistently with `AKControlButtonStyle`.
 public struct AKFrameStepButton: View {
     public let direction: AKStepDirection
     public let isEnabled: Bool
     public let size: CGFloat
-    public let onStep: () -> Void
-    
-    @Environment(\.akPlayerTheme) private var theme
-    
-    public var iconName: String {
-        switch direction {
-        case .backward: return theme.icons.stepBackward
-        case .forward:  return theme.icons.stepForward
-        }
-    }
-    
+    public let style: AKButtonStyle?
+    public let onAction: () -> Void
+
     public init(
         direction: AKStepDirection,
         isEnabled: Bool = true,
         size: CGFloat = 36,
-        onStep: @escaping () -> Void
+        style: AKButtonStyle? = nil,
+        onAction: @escaping () -> Void
     ) {
         self.direction = direction
         self.isEnabled = isEnabled
         self.size = size
-        self.onStep = onStep
+        self.style = style
+        self.onAction = onAction
     }
-    
+
     public var body: some View {
-        Button(action: onStep) {
-            Image(systemName: iconName)
-                .font(.system(size: size * 0.42, weight: .regular))
-        }
-        .buttonStyle(AKControlButtonStyle(size: size))
-        .disabled(!isEnabled)
+        AKTransportButton(
+            action: .frameStep(direction: direction),
+            isEnabled: isEnabled,
+            size: size,
+            style: style,
+            onAction: onAction
+        )
     }
 }
 
@@ -55,9 +50,9 @@ public struct AKFrameStepButton: View {
     ZStack {
         Color.black.ignoresSafeArea()
         HStack(spacing: AKSpacing.lg) {
-            AKFrameStepButton(direction: .backward, isEnabled: true, onStep: {})
-            AKFrameStepButton(direction: .forward, isEnabled: true, onStep: {})
-            AKFrameStepButton(direction: .forward, isEnabled: false, onStep: {})
+            AKFrameStepButton(direction: .backward, isEnabled: true, onAction: {})
+            AKFrameStepButton(direction: .forward, isEnabled: true, onAction: {})
+            AKFrameStepButton(direction: .forward, isEnabled: false, onAction: {})
         }
         .environment(\.akPlayerTheme, .standard)
     }

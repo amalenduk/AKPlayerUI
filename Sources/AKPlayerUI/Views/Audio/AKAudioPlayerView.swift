@@ -126,30 +126,32 @@ public struct AKAudioPlayerView: View {
     private var backgroundSurface: some View {
         GeometryReader { proxy in
             ZStack {
-                Color.black.ignoresSafeArea()
+                theme.palette.background.ignoresSafeArea()
 
                 // Ambient tinted glow
                 theme.palette.accent
-                    .opacity(0.22)
-                    .blur(radius: 80)
+                    .opacity(0.24)
+                    .blur(radius: theme.materials.ambientBlurRadius * 1.5)
                     .scaleEffect(1.2)
 
                 // Dynamic Abstract Gradient
                 LinearGradient(
                     colors: [
                         theme.palette.accent.opacity(0.35),
-                        Color(white: 0.08).opacity(0.95),
-                        Color.black
+                        theme.palette.surface.opacity(0.95),
+                        theme.palette.background
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
 
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .ignoresSafeArea()
-                    .opacity(0.65)
+                if let mat = theme.materials.materialStyle.material {
+                    Rectangle()
+                        .fill(mat)
+                        .ignoresSafeArea()
+                        .opacity(0.65)
+                }
             }
         }
     }
@@ -327,12 +329,27 @@ public struct AKAudioPlayerView: View {
         .padding(.horizontal, AKSpacing.md)
         .padding(.vertical, AKSpacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(red: 0.12, green: 0.12, blue: 0.16).opacity(0.95))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            ZStack {
+                if let mat = theme.materials.materialStyle.material {
+                    RoundedRectangle(cornerRadius: theme.materials.controlCornerRadius, style: .continuous)
+                        .fill(mat)
+                }
+                RoundedRectangle(cornerRadius: theme.materials.controlCornerRadius, style: .continuous)
+                    .fill(theme.palette.surface)
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: theme.materials.controlCornerRadius, style: .continuous)
+                .stroke(
+                    theme.palette.glassBorder.opacity(theme.materials.glassBorderOpacity),
+                    lineWidth: theme.materials.glassBorderWidth
                 )
+        )
+        .shadow(
+            color: Color.black.opacity(theme.materials.shadowOpacity),
+            radius: theme.materials.shadowRadius,
+            x: 0,
+            y: theme.materials.shadowY
         )
     }
 
@@ -480,7 +497,7 @@ public struct AKAudioPlayerView: View {
             AKSeekButton(
                 direction: .backward,
                 stepSeconds: coordinator.configuration.playback.skipBackwardDuration,
-                onSeek: { coordinator.skipBackward() }
+                onAction: { coordinator.skipBackward() }
             )
 
             Spacer()
@@ -496,7 +513,7 @@ public struct AKAudioPlayerView: View {
             AKSeekButton(
                 direction: .forward,
                 stepSeconds: coordinator.configuration.playback.skipForwardDuration,
-                onSeek: { coordinator.skipForward() }
+                onAction: { coordinator.skipForward() }
             )
 
             Spacer()
@@ -530,7 +547,7 @@ public struct AKAudioPlayerView: View {
                 .foregroundColor(.white.opacity(0.8))
                 .padding(.horizontal, AKSpacing.sm)
                 .padding(.vertical, AKSpacing.xs)
-                .background(Capsule().fill(Color.white.opacity(0.12)))
+                .akGlassPill()
             }
 
             Spacer()
@@ -557,11 +574,18 @@ public struct AKAudioPlayerView: View {
         }) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(isSelected ? .white : theme.palette.foregroundSecondary)
+                .foregroundColor(isSelected ? theme.palette.textPrimary : theme.palette.foregroundSecondary)
                 .frame(width: 38, height: 38)
                 .background(
                     Circle()
-                        .fill(isSelected ? theme.palette.accent : Color.white.opacity(0.08))
+                        .fill(isSelected ? theme.palette.accent : theme.palette.glassFill)
+                )
+                .overlay(
+                    Circle()
+                        .stroke(
+                            isSelected ? Color.clear : theme.palette.glassBorder.opacity(theme.materials.glassBorderOpacity),
+                            lineWidth: theme.materials.glassBorderWidth
+                        )
                 )
         }
         .buttonStyle(.plain)
