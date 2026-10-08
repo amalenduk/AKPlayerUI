@@ -114,7 +114,7 @@ public struct AKAudioPlayerView: View {
         .animation(.spring(response: 0.38, dampingFraction: 0.82), value: uiState.activeInlineOverlay)
         .sheet(item: $uiState.activeSheet) { sheet in
             auxiliaryOverlayView(for: sheet, placement: .sheet)
-                .presentationDetents([.fraction(0.68), .large])
+                .presentationDetents(presentationDetents(for: sheet))
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.96))
         }
@@ -593,6 +593,17 @@ public struct AKAudioPlayerView: View {
 
     // MARK: - Unified Auxiliary Overlay Factory
 
+    private func presentationDetents(for sheet: AKPlayerAuxiliarySheet) -> Set<PresentationDetent> {
+        switch sheet {
+        case .playbackSpeed:
+            return [.height(310)]
+        case .moreOptions:
+            return [.height(410), .medium]
+        case .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
+            return [.fraction(0.68), .large]
+        }
+    }
+
     @ViewBuilder
     private func auxiliaryOverlayView(for sheet: AKPlayerAuxiliarySheet, placement: AKOverlayPlacementMode) -> some View {
         switch sheet {
@@ -646,6 +657,25 @@ public struct AKAudioPlayerView: View {
                 placementMode: placement,
                 title: "Audio Details",
                 subtitle: coordinator.currentTitle,
+                onDismiss: { uiState.dismissAuxiliary() }
+            )
+        case .playbackSpeed:
+            AKPlaybackSpeedSheet(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: placement,
+                onDismiss: { uiState.dismissAuxiliary() }
+            )
+        case .moreOptions:
+            AKMoreOptionsSheet(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: placement,
+                onSelectAction: { targetSheet in
+                    uiState.presentSheet(targetSheet, isAudioOnly: coordinator.isAudioOnly)
+                },
                 onDismiss: { uiState.dismissAuxiliary() }
             )
         }

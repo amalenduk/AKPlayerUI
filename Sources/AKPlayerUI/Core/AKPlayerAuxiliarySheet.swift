@@ -13,6 +13,8 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
     case chapters
     case trackSelection
     case details
+    case playbackSpeed
+    case moreOptions
 
     public var id: String { rawValue }
 
@@ -24,6 +26,8 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
         case .chapters:       return "Chapters"
         case .trackSelection: return "Audio & Subtitles"
         case .details:        return "Media Information"
+        case .playbackSpeed:  return "Playback Speed"
+        case .moreOptions:    return "More Options"
         }
     }
 
@@ -35,6 +39,8 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
         case .chapters:       return "bookmark"
         case .trackSelection: return "waveform.badge.magnifyingglass"
         case .details:        return "info.circle"
+        case .playbackSpeed:  return "speedometer"
+        case .moreOptions:    return "line.3.horizontal"
         }
     }
 }

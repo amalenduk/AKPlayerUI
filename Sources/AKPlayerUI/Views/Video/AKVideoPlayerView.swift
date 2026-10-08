@@ -7,13 +7,14 @@ import SwiftUI
 import AKPlayer
 
 /// Flagship Fullscreen Video Player View featuring autohiding glass HUD, split touch gestures,
-/// capability-driven controls, and native ad overlays.
+/// capability-driven controls, floating bottom HUD island, and native ad overlays.
 public struct AKVideoPlayerView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     @ObservedObject public var uiState: AKPlayerUIState
     public let theme: AKPlayerTheme
     
     @State private var isHUDVisible: Bool = true
+    @State private var isScreenLocked: Bool = false
     @State private var hideHUDTask: Task<Void, Never>?
     
     public init(
@@ -43,50 +44,64 @@ public struct AKVideoPlayerView: View {
             .ignoresSafeArea()
             
             // 2. Gesture Surface (Edge swipes, double-tap seek, pinch zoom)
-            AKVideoGestureOverlay(
-                configuration: coordinator.configuration.gestures,
-                coordinator: coordinator,
-                isHUDVisible: isHUDVisible,
-                canSeek: coordinator.capabilities.canSeek,
-                canPlayFastForward: (coordinator.capabilities.canPlayFastForward || (coordinator.currentMedia?.canPlay(at: .custom(2.0)) ?? false) || coordinator.capabilities.canSeek) && !coordinator.adManager.isAdActive,
-                canPlayFastReverse: (coordinator.capabilities.canPlayFastReverse || (coordinator.currentMedia?.canPlay(at: .custom(-2.0)) ?? false)) && !coordinator.adManager.isAdActive,
-                typography: theme.typography,
-                onSingleTap: {
-                    toggleHUD()
-                },
-                onDoubleTapSeek: { direction in
-                    guard coordinator.capabilities.canSeek else { return }
-                    hideHUDTask?.cancel()
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        isHUDVisible = false
-                    }
-                    if direction == .backward {
-                        coordinator.skipBackward()
-                    } else {
-                        coordinator.skipForward()
-                    }
-                },
-                onVolumeChanged: { _ in
-                    resetHUDTimer()
-                },
-                onBrightnessChanged: { _ in
-                    resetHUDTimer()
-                },
-                onGestureActiveChanged: { isActive in
-                    if isActive {
+            if !isScreenLocked {
+                AKVideoGestureOverlay(
+                    configuration: coordinator.configuration.gestures,
+                    coordinator: coordinator,
+                    isHUDVisible: isHUDVisible,
+                    canSeek: coordinator.capabilities.canSeek,
+                    canPlayFastForward: (coordinator.capabilities.canPlayFastForward || (coordinator.currentMedia?.canPlay(at: .custom(2.0)) ?? false) || coordinator.capabilities.canSeek) && !coordinator.adManager.isAdActive,
+                    canPlayFastReverse: (coordinator.capabilities.canPlayFastReverse || (coordinator.currentMedia?.canPlay(at: .custom(-2.0)) ?? false)) && !coordinator.adManager.isAdActive,
+                    typography: theme.typography,
+                    onSingleTap: {
+                        toggleHUD()
+                    },
+                    onDoubleTapSeek: { direction in
+                        guard coordinator.capabilities.canSeek else { return }
                         hideHUDTask?.cancel()
                         withAnimation(.easeOut(duration: 0.2)) {
                             isHUDVisible = false
                         }
+                        if direction == .backward {
+                            coordinator.skipBackward()
+                        } else {
+                            coordinator.skipForward()
+                        }
+                    },
+                    onVolumeChanged: { _ in
+                        resetHUDTimer()
+                    },
+                    onBrightnessChanged: { _ in
+                        resetHUDTimer()
+                    },
+                    onGestureActiveChanged: { isActive in
+                        if isActive {
+                            hideHUDTask?.cancel()
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                isHUDVisible = false
+                            }
+                        }
+                    },
+                    onFastPlaybackBegan: { targetRate in
+                        coordinator.setPlaybackRate(AKPlaybackRate(rate: targetRate))
+                    },
+                    onFastPlaybackEnded: {
+                        coordinator.setPlaybackRate(.normal)
                     }
-                },
-                onFastPlaybackBegan: { targetRate in
-                    coordinator.setPlaybackRate(AKPlaybackRate(rate: targetRate))
-                },
-                onFastPlaybackEnded: {
-                    coordinator.setPlaybackRate(.normal)
-                }
-            )
+                )
+            } else {
+                // Screen is locked: Tap anywhere reveals unlock button
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            isHUDVisible.toggle()
+                        }
+                        if isHUDVisible {
+                            resetHUDTimer()
+                        }
+                    }
+            }
             
             // 3. Native Interstitial Ad Overlay
             AKAdOverlayView(
@@ -96,22 +111,32 @@ public struct AKVideoPlayerView: View {
             
             // 4. Autohiding Glass HUD Overlays
             if isHUDVisible {
-                VStack {
-                    // Top Navigation & Tool Bar
-                    topBar
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    
-                    Spacer()
-                    
-                    // Center Transport Controls
-                    centerTransport
-                        .transition(.scale(scale: 0.95).combined(with: .opacity))
-                    
-                    Spacer()
-                    
-                    // Bottom Timeline & Status Bar
-                    bottomBar
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                if isScreenLocked {
+                    // Locked State HUD: Only the lock badge on left edge
+                    HStack {
+                        lockButton
+                            .padding(.leading, AKSpacing.xl)
+                        Spacer()
+                    }
+                    .transition(.opacity)
+                } else {
+                    // Normal Unlocked HUD
+                    VStack {
+                        // Top Navigation & Tool Bar
+                        topBar
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        
+                        Spacer()
+                        
+                        // Floating Bottom Island Card
+                        bottomCard
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                    .overlay(alignment: .leading) {
+                        lockButton
+                            .padding(.leading, AKSpacing.xl)
+                            .padding(.top, 40)
+                    }
                 }
             }
             
@@ -138,12 +163,13 @@ public struct AKVideoPlayerView: View {
             }
         }
         .animation(.spring(response: 0.38, dampingFraction: 0.82), value: uiState.activeInlineOverlay)
+        .animation(.easeInOut(duration: 0.25), value: isScreenLocked)
         .onAppear {
             resetHUDTimer()
         }
         .sheet(item: $uiState.activeSheet) { sheet in
             sheetView(for: sheet, placement: .sheet)
-                .presentationDetents([.fraction(0.68), .large])
+                .presentationDetents(presentationDetents(for: sheet))
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.96))
         }
@@ -152,13 +178,29 @@ public struct AKVideoPlayerView: View {
     
     // MARK: - Subviews
     
+    private var lockButton: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.72)) {
+                isScreenLocked.toggle()
+            }
+            resetHUDTimer()
+        }) {
+            Image(systemName: isScreenLocked ? "lock.fill" : "lock.open")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(isScreenLocked ? theme.palette.accent : theme.palette.textPrimary)
+                .frame(width: 40, height: 40)
+                .akGlassCircle()
+        }
+        .buttonStyle(.plain)
+    }
+    
     private var topBar: some View {
         HStack(spacing: AKSpacing.md) {
             // Collapse / Dismiss Button
             Button(action: {
                 coordinator.collapse()
             }) {
-                Image(systemName: "chevron.down")
+                Image(systemName: "chevron.backward")
                     .font(theme.typography.button)
                     .foregroundColor(theme.palette.textPrimary)
                     .frame(width: 40, height: 40)
@@ -185,6 +227,11 @@ public struct AKVideoPlayerView: View {
             
             // Auxiliary Tools
             HStack(spacing: AKSpacing.sm) {
+                // Audio Track Trigger
+                toolButton(icon: "speaker.wave.2.fill") {
+                    uiState.presentSheet(.trackSelection, isAudioOnly: coordinator.isAudioOnly)
+                }
+
                 // Equalizer Sheet Trigger
                 if coordinator.configuration.capabilities.showsEqualizer {
                     toolButton(icon: theme.icons.equalizer) {
@@ -209,65 +256,11 @@ public struct AKVideoPlayerView: View {
         .padding(.top, AKSpacing.xl)
     }
     
-    private var centerTransport: some View {
-        HStack(spacing: AKSpacing.xxl) {
-            // Frame Step Backward (Queries Capabilities)
-            if coordinator.configuration.capabilities.showsStepButtons {
-                AKFrameStepButton(
-                    direction: .backward,
-                    isEnabled: coordinator.capabilities.canStepBackward
-                ) {
-                    coordinator.step(forward: false)
-                    resetHUDTimer()
-                }
-            }
-            
-            // Skip Backward
-            if coordinator.configuration.capabilities.showsSkipButtons {
-                AKSeekButton(
-                    direction: .backward,
-                    stepSeconds: coordinator.configuration.playback.skipBackwardDuration,
-                    isEnabled: coordinator.capabilities.canSeek
-                ) {
-                    coordinator.skipBackward()
-                    resetHUDTimer()
-                }
-            }
-            
-            // Play / Pause Central Button
-            AKPlayPauseButton(state: coordinator.state,
-                              autoPlay: coordinator.autoPlay) {
-                coordinator.player.togglePlayPause()
-            }
-            
-            // Skip Forward
-            if coordinator.configuration.capabilities.showsSkipButtons {
-                AKSeekButton(
-                    direction: .forward,
-                    stepSeconds: coordinator.configuration.playback.skipForwardDuration,
-                    isEnabled: coordinator.capabilities.canSeek,
-                ) {
-                    coordinator.skipForward()
-                    resetHUDTimer()
-                }
-            }
-            
-            // Frame Step Forward (Queries Capabilities)
-            if coordinator.configuration.capabilities.showsStepButtons {
-                AKFrameStepButton(
-                    direction: .forward,
-                    isEnabled: coordinator.capabilities.canStepForward
-                ) {
-                    coordinator.step(forward: true)
-                    resetHUDTimer()
-                }
-            }
-        }
-    }
+    // MARK: - Floating Bottom Island HUD Card
     
-    private var bottomBar: some View {
-        VStack(spacing: AKSpacing.sm) {
-            // Timeline Scrubber (SRP) with full Live DVR support
+    private var bottomCard: some View {
+        VStack(spacing: AKSpacing.md) {
+            // Row 1: Full-Width Scrubber Timeline with Timestamps
             AKTimelineSlider(
                 currentTime: coordinator.currentTime,
                 duration: coordinator.duration,
@@ -297,34 +290,152 @@ public struct AKVideoPlayerView: View {
                 }
             )
             
-            // Bottom Accessories Row
-            HStack {
-                Spacer()
+            // Row 2: Central Hero Transport Controls
+            HStack(spacing: AKSpacing.xxl) {
+                // Skip Backward
+                if coordinator.configuration.capabilities.showsSkipButtons {
+                    AKSeekButton(
+                        direction: .backward,
+                        stepSeconds: coordinator.configuration.playback.skipBackwardDuration,
+                        isEnabled: coordinator.capabilities.canSeek
+                    ) {
+                        coordinator.skipBackward()
+                        resetHUDTimer()
+                    }
+                }
                 
-                // Aspect Ratio Selector
-                if coordinator.configuration.capabilities.showsAspectSelector {
-                    Menu {
-                        ForEach(AKVideoAspectRatio.allCases) { ratio in
-                            Button(ratio.rawValue) {
-                                coordinator.aspectRatio = ratio
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: AKSpacing.xxs) {
-                            Image(systemName: "aspectratio")
-                            Text(coordinator.aspectRatio.rawValue)
-                                .font(theme.typography.badgeSmall)
-                        }
-                        .foregroundColor(theme.palette.textPrimary.opacity(0.85))
-                        .padding(.horizontal, AKSpacing.xs)
-                        .padding(.vertical, AKSpacing.xxs)
-                        .akGlassPill()
+                // Hero Play/Pause Button (64pt Crystalline Glass)
+                AKPlayPauseButton(
+                    state: coordinator.state,
+                    autoPlay: coordinator.autoPlay,
+                    size: 64,
+                    style: .glass
+                ) {
+                    coordinator.player.togglePlayPause()
+                    resetHUDTimer()
+                }
+                
+                // Skip Forward
+                if coordinator.configuration.capabilities.showsSkipButtons {
+                    AKSeekButton(
+                        direction: .forward,
+                        stepSeconds: coordinator.configuration.playback.skipForwardDuration,
+                        isEnabled: coordinator.capabilities.canSeek
+                    ) {
+                        coordinator.skipForward()
+                        resetHUDTimer()
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
+            
+            // Row 3: Thumb Action Corner Controls
+            HStack {
+                // Left Thumb: Visual Controls (Aspect Ratio + Subtitles [CC])
+                HStack(spacing: AKSpacing.xs) {
+                    // Aspect Ratio Pill Menu
+                    if coordinator.configuration.capabilities.showsAspectSelector {
+                        Menu {
+                            ForEach(AKVideoAspectRatio.allCases) { ratio in
+                                Button(action: {
+                                    coordinator.aspectRatio = ratio
+                                    resetHUDTimer()
+                                }) {
+                                    HStack {
+                                        Text(ratio.rawValue)
+                                        if coordinator.aspectRatio == ratio {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: AKSpacing.xxs) {
+                                Image(systemName: "aspectratio")
+                                Text(coordinator.aspectRatio.rawValue)
+                                    .font(theme.typography.caption1.weight(.semibold))
+                            }
+                            .foregroundColor(theme.palette.textPrimary)
+                            .padding(.horizontal, AKSpacing.sm)
+                            .padding(.vertical, 7)
+                            .akGlassPill()
+                        }
+                    }
+                    
+                    // Subtitles [CC] Quick Button
+                    Button(action: {
+                        uiState.presentSheet(.trackSelection, isAudioOnly: coordinator.isAudioOnly)
+                    }) {
+                        HStack(spacing: AKSpacing.xxs) {
+                            Image(systemName: coordinator.selectedSubtitleTrack?.isOff == false ? "captions.bubble.fill" : "captions.bubble")
+                            Text("CC")
+                                .font(theme.typography.caption1.weight(.bold))
+                        }
+                        .foregroundColor(coordinator.selectedSubtitleTrack?.isOff == false ? theme.palette.accent : theme.palette.textPrimary)
+                        .padding(.horizontal, AKSpacing.sm)
+                        .padding(.vertical, 7)
+                        .akGlassPill()
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                Spacer()
+                
+                // Right Thumb: Audio & Secondary Controls (Speed Pill + More Actions Menu [≡])
+                HStack(spacing: AKSpacing.xs) {
+                    // Playback Speed Pill (e.g. 1.00x)
+                    Button(action: {
+                        uiState.presentSheet(.playbackSpeed, isAudioOnly: coordinator.isAudioOnly)
+                    }) {
+                        HStack(spacing: AKSpacing.xxxs) {
+                            Text(AKPlaybackSpeedSheet.format(rate: coordinator.playbackRate))
+                                .font(theme.typography.caption1.weight(.bold))
+                        }
+                        .foregroundColor(coordinator.playbackRate != 1.0 ? theme.palette.accent : theme.palette.textPrimary)
+                        .padding(.horizontal, AKSpacing.sm)
+                        .padding(.vertical, 7)
+                        .akGlassPill()
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // More Actions [≡] Button
+                    Button(action: {
+                        uiState.presentSheet(.moreOptions, isAudioOnly: coordinator.isAudioOnly)
+                    }) {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(theme.palette.textPrimary)
+                            .frame(width: 32, height: 32)
+                            .akGlassCircle()
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
-        .padding(.horizontal, AKSpacing.xl)
-        .padding(.bottom, AKSpacing.xxl)
+        .padding(.horizontal, AKSpacing.lg)
+        .padding(.vertical, AKSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: Color.white.opacity(0.35), location: 0.0),
+                                    .init(color: Color.white.opacity(0.10), location: 0.5),
+                                    .init(color: Color.white.opacity(0.05), location: 1.0)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.0
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.45), radius: 20, x: 0, y: 8)
+        )
+        .padding(.horizontal, AKSpacing.lg)
+        .padding(.bottom, AKSpacing.md)
     }
     
     private func toolButton(icon: String, action: @escaping () -> Void) -> some View {
@@ -341,6 +452,30 @@ public struct AKVideoPlayerView: View {
     @ViewBuilder
     private func sheetView(for sheet: AKPlayerAuxiliarySheet, placement: AKOverlayPlacementMode = .sheet) -> some View {
         switch sheet {
+        case .playbackSpeed:
+            AKPlaybackSpeedSheet(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: placement,
+                onDismiss: { uiState.dismissAuxiliary() }
+            )
+        case .moreOptions:
+            AKMoreOptionsSheet(
+                coordinator: coordinator,
+                palette: theme.palette,
+                typography: theme.typography,
+                placementMode: placement,
+                onSelectAction: { targetSheet in
+                    uiState.presentSheet(targetSheet, isAudioOnly: coordinator.isAudioOnly)
+                },
+                onLockScreen: {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        isScreenLocked = true
+                    }
+                },
+                onDismiss: { uiState.dismissAuxiliary() }
+            )
         case .equalizer:
             AKEqualizerView(
                 equalizer: coordinator.equalizer,
@@ -396,6 +531,19 @@ public struct AKVideoPlayerView: View {
         }
     }
     
+    // MARK: - Presentation Detents
+
+    private func presentationDetents(for sheet: AKPlayerAuxiliarySheet) -> Set<PresentationDetent> {
+        switch sheet {
+        case .playbackSpeed:
+            return [.height(310)]
+        case .moreOptions:
+            return [.height(410), .medium]
+        case .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
+            return [.fraction(0.68), .large]
+        }
+    }
+
     // MARK: - HUD Autohide Timer
     
     private func toggleHUD() {
