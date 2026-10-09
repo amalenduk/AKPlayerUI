@@ -28,6 +28,12 @@ public struct AKPlaybackConfiguration: Sendable, Equatable {
     /// Whether playback position is remembered and resumed across sessions.
     public var remembersPlaybackPosition: Bool
 
+    /// Default placement mode for auxiliary sheets (e.g. in portrait orientation).
+    public var overlayPlacement: AKOverlayPlacementMode
+
+    /// Placement mode for auxiliary sheets when the player is in landscape orientation.
+    public var landscapeOverlayPlacement: AKOverlayPlacementMode
+
     public init(
         skipBackwardDuration: TimeInterval = 10.0,
         skipForwardDuration: TimeInterval = 15.0,
@@ -35,7 +41,9 @@ public struct AKPlaybackConfiguration: Sendable, Equatable {
         continueAudioInBackground: Bool = true,
         defaultPlaybackSpeed: Float = 1.0,
         autoplayNextInQueue: Bool = true,
-        remembersPlaybackPosition: Bool = true
+        remembersPlaybackPosition: Bool = true,
+        overlayPlacement: AKOverlayPlacementMode = .sheet,
+        landscapeOverlayPlacement: AKOverlayPlacementMode = .sideDrawer
     ) {
         self.skipBackwardDuration = skipBackwardDuration
         self.skipForwardDuration = skipForwardDuration
@@ -44,5 +52,7 @@ public struct AKPlaybackConfiguration: Sendable, Equatable {
         self.defaultPlaybackSpeed = defaultPlaybackSpeed
         self.autoplayNextInQueue = autoplayNextInQueue
         self.remembersPlaybackPosition = remembersPlaybackPosition
+        self.overlayPlacement = overlayPlacement
+        self.landscapeOverlayPlacement = landscapeOverlayPlacement
     }
 }

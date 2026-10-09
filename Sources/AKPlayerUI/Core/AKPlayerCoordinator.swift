@@ -37,6 +37,11 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
         get { uiState.overlayPlacement }
         set { uiState.overlayPlacement = newValue }
     }
+
+    public var landscapeOverlayPlacement: AKOverlayPlacementMode {
+        get { uiState.landscapeOverlayPlacement }
+        set { uiState.landscapeOverlayPlacement = newValue }
+    }
     
     public var activeInlineOverlay: AKPlayerAuxiliarySheet? {
         get { uiState.activeInlineOverlay }
@@ -54,6 +59,13 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
         Binding(
             get: { self.uiState.overlayPlacement },
             set: { self.uiState.overlayPlacement = $0 }
+        )
+    }
+
+    public var landscapeOverlayPlacementBinding: Binding<AKOverlayPlacementMode> {
+        Binding(
+            get: { self.uiState.landscapeOverlayPlacement },
+            set: { self.uiState.landscapeOverlayPlacement = $0 }
         )
     }
     
@@ -174,7 +186,10 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
         self.player = player ?? AKPlayer(configuration: configuration.makeCorePlayerConfiguration())
         self.equalizer = AKEqualizerManager()
         self.adManager = AKAdManager()
-        self.uiState = AKPlayerUIState()
+        self.uiState = AKPlayerUIState(
+            placement: configuration.playback.overlayPlacement,
+            landscapePlacement: configuration.playback.landscapeOverlayPlacement
+        )
         if configuration.playback.defaultPlaybackSpeed != 1.0 {
             self.playbackRate = configuration.playback.defaultPlaybackSpeed
         }

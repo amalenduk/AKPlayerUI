@@ -27,6 +27,15 @@ public struct AKAuxiliaryHostModifier: ViewModifier {
 
     public func body(content: Content) -> some View {
         content
+            .background(
+                GeometryReader { geo in
+                    let isLandscape = geo.size.width > geo.size.height
+                    Color.clear
+                        .task(id: isLandscape) {
+                            uiState.updateOrientation(isLandscape: isLandscape)
+                        }
+                }
+            )
             // 1. Side Drawer Mode: Slide-in Floating Frosted Glass Panel
             .overlay {
                 if uiState.isDrawerActive, let activeOverlay = uiState.activeInlineOverlay {

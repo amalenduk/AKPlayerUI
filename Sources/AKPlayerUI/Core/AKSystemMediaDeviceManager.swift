@@ -4,6 +4,9 @@
 //
 
 import Foundation
+#if canImport(Combine)
+import Combine
+#endif
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -16,7 +19,7 @@ import MediaPlayer
 
 /// Manages hardware system volume and device display brightness without modifying player-level audio.
 @MainActor
-public final class AKSystemMediaDeviceManager {
+public final class AKSystemMediaDeviceManager: ObservableObject {
     public static let shared = AKSystemMediaDeviceManager()
     
     #if os(iOS)
@@ -25,13 +28,38 @@ public final class AKSystemMediaDeviceManager {
     private var volumeObservation: NSKeyValueObservation?
     #endif
 
+    private var lastNonZeroVolume: Float = 0.5
+
+    /// Whether the system audio is currently muted (volume is 0).
+    @Published public private(set) var isMuted: Bool = false
+
+    /// Current hardware system output volume (0.0 ... 1.0).
+    @Published public private(set) var currentVolume: Float = 0.5
+
+    /// Current device screen brightness (0.0 ... 1.0).
+    @Published public private(set) var currentBrightness: Float = 0.5
+
     /// Callback invoked when hardware side buttons or software volume changes (0.0 ... 1.0).
     public var onVolumeChanged: ((Float) -> Void)?
+
+    /// Callback invoked when system mute state changes.
+    public var onMuteChanged: ((Bool) -> Void)?
     
     private init() {
         #if os(iOS)
+        let initialVolume = AVAudioSession.sharedInstance().outputVolume
+        currentVolume = initialVolume
+        isMuted = (initialVolume == 0)
+        if initialVolume > 0 {
+            lastNonZeroVolume = initialVolume
+        }
+        currentBrightness = readCurrentBrightness()
         setupVolumeControl()
         startVolumeObservation()
+        #else
+        currentVolume = 0.5
+        isMuted = false
+        currentBrightness = 0.5
         #endif
     }
     
@@ -65,26 +93,38 @@ public final class AKSystemMediaDeviceManager {
         volumeObservation = session.observe(\.outputVolume, options: [.new]) { [weak self] _, change in
             guard let newVol = change.newValue else { return }
             Task { @MainActor [weak self] in
-                self?.onVolumeChanged?(newVol)
+                guard let self else { return }
+                self.currentVolume = newVol
+                if newVol > 0 {
+                    self.lastNonZeroVolume = newVol
+                }
+                self.onVolumeChanged?(newVol)
+
+                let isNowMuted = (newVol == 0)
+                if isNowMuted != self.isMuted {
+                    self.isMuted = isNowMuted
+                    self.onMuteChanged?(isNowMuted)
+                }
             }
         }
     }
     #endif
     
-    /// Current hardware system output volume (0.0 ... 1.0).
-    public var currentVolume: Float {
-        #if os(iOS)
-        try? AVAudioSession.sharedInstance().setActive(true)
-        return AVAudioSession.sharedInstance().outputVolume
-        #else
-        return 0.5
-        #endif
-    }
-    
     /// Sets the hardware system volume directly via MPVolumeView.
     public func setVolume(_ volume: Float) {
-        #if os(iOS)
         let clamped = max(0.0, min(1.0, volume))
+        if clamped > 0 {
+            lastNonZeroVolume = clamped
+        }
+        currentVolume = clamped
+        let isNowMuted = (clamped == 0)
+        if isNowMuted != isMuted {
+            isMuted = isNowMuted
+            onMuteChanged?(isNowMuted)
+        }
+        onVolumeChanged?(clamped)
+
+        #if os(iOS)
         if volumeSlider == nil {
             setupVolumeControl()
         }
@@ -94,9 +134,43 @@ public final class AKSystemMediaDeviceManager {
         slider.sendActions(for: .valueChanged)
         #endif
     }
+
+    /// Flag indicating if a mute/unmute transition is underway, used to prevent floating volume HUD popups.
+    @Published public private(set) var isMutingOrUnmuting: Bool = false
+
+    /// Sets the mute status of the system audio.
+    public func setMute(_ muted: Bool) {
+        isMutingOrUnmuting = true
+        if muted {
+            if currentVolume > 0 {
+                lastNonZeroVolume = currentVolume
+            }
+            setVolume(0.0)
+        } else {
+            let restoreVol = lastNonZeroVolume > 0 ? lastNonZeroVolume : 0.5
+            setVolume(restoreVol)
+        }
+        if isMuted != muted {
+            isMuted = muted
+            onMuteChanged?(muted)
+        }
+        // Reset flag asynchronously so any immediate volume callbacks can skip HUD presentation
+        DispatchQueue.main.async { [weak self] in
+            self?.isMutingOrUnmuting = false
+        }
+    }
+
+    /// Sets the mute status of the system audio (convenience alias for setMute).
+    public func setMuted(_ muted: Bool) {
+        setMute(muted)
+    }
+
+    /// Toggles the mute status of the system audio.
+    public func toggleMute() {
+        setMute(!isMuted)
+    }
     
-    /// Current device screen brightness (0.0 ... 1.0).
-    public var currentBrightness: Float {
+    private func readCurrentBrightness() -> Float {
         #if os(iOS)
         if let windowScene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
@@ -111,8 +185,9 @@ public final class AKSystemMediaDeviceManager {
     
     /// Sets device screen brightness.
     public func setBrightness(_ brightness: Float) {
-        #if os(iOS)
         let clamped = CGFloat(max(0.0, min(1.0, brightness)))
+        currentBrightness = Float(clamped)
+        #if os(iOS)
         if let windowScene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first(where: { $0.activationState == .foregroundActive }) {

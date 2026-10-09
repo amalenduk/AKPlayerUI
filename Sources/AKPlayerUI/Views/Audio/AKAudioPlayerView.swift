@@ -116,6 +116,15 @@ public struct AKAudioPlayerView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            GeometryReader { geo in
+                let isLandscape = geo.size.width > geo.size.height
+                Color.clear
+                    .task(id: isLandscape) {
+                        uiState.updateOrientation(isLandscape: isLandscape)
+                    }
+            }
+        )
         .animation(.spring(response: 0.38, dampingFraction: 0.82), value: uiState.activeInlineOverlay)
         .sheet(item: $uiState.activeSheet) { sheet in
             auxiliaryOverlayView(for: sheet, placement: .sheet)

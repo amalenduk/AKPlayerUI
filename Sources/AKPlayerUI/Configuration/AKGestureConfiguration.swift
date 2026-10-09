@@ -16,6 +16,9 @@ public struct AKGestureConfiguration: Sendable, Equatable {
     /// Whether double-tapping left/right screen zones triggers ±10s seeking ripples.
     public var isDoubleTapToSeekEnabled: Bool
 
+    /// Whether double-tapping the center screen zone toggles play/pause with ripple feedback.
+    public var isDoubleTapToPlayPauseEnabled: Bool
+
     /// Whether pinch gestures zoom the video canvas between fit, fill, and custom magnification.
     public var isPinchToZoomEnabled: Bool
 
@@ -26,12 +29,14 @@ public struct AKGestureConfiguration: Sendable, Equatable {
         isVerticalSwipeVolumeEnabled: Bool = true,
         isVerticalSwipeBrightnessEnabled: Bool = true,
         isDoubleTapToSeekEnabled: Bool = true,
+        isDoubleTapToPlayPauseEnabled: Bool = true,
         isPinchToZoomEnabled: Bool = true,
         horizontalScrubSensitivity: Double = 1.0
     ) {
         self.isVerticalSwipeVolumeEnabled = isVerticalSwipeVolumeEnabled
         self.isVerticalSwipeBrightnessEnabled = isVerticalSwipeBrightnessEnabled
         self.isDoubleTapToSeekEnabled = isDoubleTapToSeekEnabled
+        self.isDoubleTapToPlayPauseEnabled = isDoubleTapToPlayPauseEnabled
         self.isPinchToZoomEnabled = isPinchToZoomEnabled
         self.horizontalScrubSensitivity = horizontalScrubSensitivity
     }

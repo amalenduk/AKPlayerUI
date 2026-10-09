@@ -42,6 +42,7 @@ public struct AKVideoPlayerControlsView: View {
                     canPlayFastForward: (coordinator.capabilities.canPlayFastForward || (coordinator.currentMedia?.canPlay(at: .custom(2.0)) ?? false) || coordinator.capabilities.canSeek) && !coordinator.adManager.isAdActive,
                     canPlayFastReverse: (coordinator.capabilities.canPlayFastReverse || (coordinator.currentMedia?.canPlay(at: .custom(-2.0)) ?? false)) && !coordinator.adManager.isAdActive,
                     typography: theme.typography,
+                    theme: theme,
                     onSingleTap: {
                         toggleHUD()
                     },
@@ -56,6 +57,10 @@ public struct AKVideoPlayerControlsView: View {
                         } else {
                             coordinator.skipForward()
                         }
+                    },
+                    onDoubleTapCenterPlayPause: {
+                        hideHUDTask?.cancel()
+                        coordinator.togglePlayPause()
                     },
                     onVolumeChanged: { _ in
                         resetHUDTimer()

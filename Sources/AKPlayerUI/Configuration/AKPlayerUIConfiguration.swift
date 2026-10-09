@@ -34,6 +34,18 @@ public struct AKPlayerUIConfiguration: Sendable, Equatable {
         self.capabilities = capabilities
     }
 
+    /// Default placement mode for auxiliary sheets (e.g. in portrait orientation).
+    public var overlayPlacement: AKOverlayPlacementMode {
+        get { playback.overlayPlacement }
+        set { playback.overlayPlacement = newValue }
+    }
+
+    /// Placement mode for auxiliary sheets when the player is in landscape orientation.
+    public var landscapeOverlayPlacement: AKOverlayPlacementMode {
+        get { playback.landscapeOverlayPlacement }
+        set { playback.landscapeOverlayPlacement = newValue }
+    }
+
     /// Automatic adaptive baseline configuration.
     public static let automatic = AKPlayerUIConfiguration()
 

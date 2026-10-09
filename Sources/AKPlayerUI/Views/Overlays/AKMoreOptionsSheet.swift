@@ -61,11 +61,9 @@ public struct AKMoreOptionsSheet: View {
 
                         // Loop & Shuffle Section
                         loopSection
-                            .padding(.horizontal, AKSpacing.lg)
 
                         // Aspect Ratio Section
                         aspectRatioSection
-                            .padding(.horizontal, AKSpacing.lg)
 
                         Spacer(minLength: AKSpacing.xl)
                     }
@@ -123,6 +121,25 @@ public struct AKMoreOptionsSheet: View {
             gridButton(title: "Lyrics", icon: "quote.bubble") {
                 onSelectAction?(.lyrics)
             }
+
+            // AirPlay
+            gridAirPlayButton
+        }
+    }
+
+    private var gridAirPlayButton: some View {
+        VStack(spacing: AKSpacing.xs) {
+            AKAirPlayButton(
+                isAudioOnly: coordinator.isAudioOnly,
+                size: 54,
+                palette: palette,
+                isGlassStyle: true
+            )
+
+            Text("AirPlay")
+                .font(typography.caption1.weight(.medium))
+                .foregroundColor(palette.textSecondary)
+                .lineLimit(1)
         }
     }
 
@@ -156,23 +173,27 @@ public struct AKMoreOptionsSheet: View {
             Text("PLAYBACK LOOP")
                 .font(typography.badgeSmall)
                 .foregroundColor(palette.textSecondary.opacity(0.7))
+                .padding(.horizontal, AKSpacing.lg)
 
-            HStack(spacing: AKSpacing.sm) {
-                loopOptionButton(title: "Off", icon: "arrow.forward", isSelected: coordinator.repeatMode == .off) {
-                    coordinator.repeatMode = .off
-                }
-                
-                loopOptionButton(title: "Repeat All", icon: "repeat", isSelected: coordinator.repeatMode == .all) {
-                    coordinator.repeatMode = .all
-                }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: AKSpacing.sm) {
+                    loopOptionButton(title: "Off", icon: "arrow.forward", isSelected: coordinator.repeatMode == .off) {
+                        coordinator.repeatMode = .off
+                    }
+                    
+                    loopOptionButton(title: "Repeat All", icon: "repeat", isSelected: coordinator.repeatMode == .all) {
+                        coordinator.repeatMode = .all
+                    }
 
-                loopOptionButton(title: "Repeat Track", icon: "repeat.1", isSelected: coordinator.repeatMode == .one) {
-                    coordinator.repeatMode = .one
+                    loopOptionButton(title: "Repeat Track", icon: "repeat.1", isSelected: coordinator.repeatMode == .one) {
+                        coordinator.repeatMode = .one
+                    }
+                    
+                    loopOptionButton(title: "Shuffle", icon: "shuffle", isSelected: coordinator.isShuffled) {
+                        coordinator.toggleShuffle()
+                    }
                 }
-                
-                loopOptionButton(title: "Shuffle", icon: "shuffle", isSelected: coordinator.isShuffled) {
-                    coordinator.toggleShuffle()
-                }
+                .padding(.horizontal, AKSpacing.lg)
             }
         }
     }
@@ -182,10 +203,11 @@ public struct AKMoreOptionsSheet: View {
             HStack(spacing: AKSpacing.xs) {
                 Image(systemName: icon)
                 Text(title)
+                    .lineLimit(1)
             }
             .font(typography.button)
             .foregroundColor(isSelected ? palette.textPrimary : palette.textSecondary)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, AKSpacing.md)
             .padding(.vertical, AKSpacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -204,29 +226,36 @@ public struct AKMoreOptionsSheet: View {
             Text("ASPECT RATIO")
                 .font(typography.badgeSmall)
                 .foregroundColor(palette.textSecondary.opacity(0.7))
+                .padding(.horizontal, AKSpacing.lg)
 
-            HStack(spacing: AKSpacing.xs) {
-                ForEach(AKVideoAspectRatio.allCases) { ratio in
-                    let isSelected = coordinator.aspectRatio == ratio
-                    Button(action: {
-                        coordinator.aspectRatio = ratio
-                    }) {
-                        Text(ratio.rawValue)
-                            .font(typography.button)
-                            .foregroundColor(isSelected ? palette.textPrimary : palette.textSecondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, AKSpacing.xs)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(isSelected ? palette.accent.opacity(0.25) : Color.white.opacity(0.06))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(isSelected ? palette.accent : Color.white.opacity(0.08), lineWidth: 1)
-                            )
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: AKSpacing.xs) {
+                    ForEach(AKVideoAspectRatio.allCases) { ratio in
+                        let isSelected = coordinator.aspectRatio == ratio
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                coordinator.aspectRatio = ratio
+                            }
+                        }) {
+                            Text(ratio.rawValue)
+                                .font(isSelected ? typography.button.weight(.semibold) : typography.button)
+                                .foregroundColor(isSelected ? palette.textPrimary : palette.textSecondary)
+                                .lineLimit(1)
+                                .padding(.horizontal, AKSpacing.md)
+                                .padding(.vertical, AKSpacing.sm)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(isSelected ? palette.accent : Color.white.opacity(0.08))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .stroke(isSelected ? palette.accent.opacity(0.6) : Color.white.opacity(0.08), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, AKSpacing.lg)
             }
         }
     }

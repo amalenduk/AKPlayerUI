@@ -48,6 +48,7 @@ extension AKPlayerCoordinator {
     func handlePlayerEvent(_ event: AKPlayerEvent) {
         switch event {
         case .stateDidChange,
+                .autoPlayDidChange(_),
                 .timeDidChange,
                 .playbackRateDidChange,
                 .didReachEnd,
@@ -84,7 +85,10 @@ extension AKPlayerCoordinator {
         switch event {
         case let .stateDidChange(state):
             self.state = state
-            self.autoPlay = player.autoPlay
+
+        case let .autoPlayDidChange(isAutoPlay):
+            self.autoPlay = isAutoPlay
+            print("autoPlay \(autoPlay)")
             
         case let .timeDidChange(currentTime):
             guard player.interstitialService.integratedTimeline == nil else { return }
@@ -120,6 +124,7 @@ extension AKPlayerCoordinator {
             break
         case .volumeDidChange(let volume):
             playerVolume = volume
+            playerIsMuted = volume == 0
         case .muteStatusDidChange(isMuted: let isMuted):
             playerIsMuted = isMuted
         case .sharePlayStateDidChange(_):

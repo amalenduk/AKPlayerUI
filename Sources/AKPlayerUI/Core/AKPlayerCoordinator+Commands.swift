@@ -82,6 +82,26 @@ extension AKPlayerCoordinator {
             play()
         }
     }
+
+    /// Sets the muted status on system device audio.
+    public func setMuted(_ isMuted: Bool) {
+        AKSystemMediaDeviceManager.shared.setMuted(isMuted)
+    }
+
+    /// Toggles the muted status on system device audio.
+    public func toggleMute() {
+        AKSystemMediaDeviceManager.shared.toggleMute()
+    }
+
+    /// Sets the muted status on the underlying player audio.
+    public func setPlayerMuted(_ isMuted: Bool) {
+        player.isMuted = isMuted
+    }
+
+    /// Toggles the muted status on the underlying player audio.
+    public func togglePlayerMute() {
+        player.isMuted.toggle()
+    }
     
     /// Resumes or starts playback.
     public func play() {

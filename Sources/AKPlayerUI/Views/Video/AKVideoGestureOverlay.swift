@@ -18,8 +18,10 @@ public struct AKVideoGestureOverlay: View {
     public let canPlayFastForward: Bool
     public let canPlayFastReverse: Bool
     public let typography: AKTypography
+    public let theme: AKPlayerTheme
     public let onSingleTap: () -> Void
     public let onDoubleTapSeek: (AKSeekDirection) -> Void
+    public let onDoubleTapCenterPlayPause: (() -> Void)?
     public let onVolumeChanged: (Float) -> Void
     public let onBrightnessChanged: (Float) -> Void
     public let onGestureActiveChanged: (Bool) -> Void
@@ -28,6 +30,8 @@ public struct AKVideoGestureOverlay: View {
 
     @State private var activeRippleDirection: AKSeekDirection?
     @State private var rippleOpacity: Double = 0.0
+    @State private var activeCenterState: AKPlayerState? = nil
+    @State private var centerPlayPauseOpacity: Double = 0.0
 
     @State private var currentVolume: Float = 0.5
     @State private var currentBrightness: Float = 0.5
@@ -49,8 +53,10 @@ public struct AKVideoGestureOverlay: View {
         canPlayFastForward: Bool = true,
         canPlayFastReverse: Bool = true,
         typography: AKTypography = .standard,
+        theme: AKPlayerTheme = .standard,
         onSingleTap: @escaping () -> Void,
         onDoubleTapSeek: @escaping (AKSeekDirection) -> Void,
+        onDoubleTapCenterPlayPause: (() -> Void)? = nil,
         onVolumeChanged: @escaping (Float) -> Void = { _ in },
         onBrightnessChanged: @escaping (Float) -> Void = { _ in },
         onGestureActiveChanged: @escaping (Bool) -> Void = { _ in },
@@ -64,8 +70,10 @@ public struct AKVideoGestureOverlay: View {
         self.canPlayFastForward = canPlayFastForward
         self.canPlayFastReverse = canPlayFastReverse
         self.typography = typography
+        self.theme = theme
         self.onSingleTap = onSingleTap
         self.onDoubleTapSeek = onDoubleTapSeek
+        self.onDoubleTapCenterPlayPause = onDoubleTapCenterPlayPause
         self.onVolumeChanged = onVolumeChanged
         self.onBrightnessChanged = onBrightnessChanged
         self.onGestureActiveChanged = onGestureActiveChanged
@@ -122,11 +130,15 @@ public struct AKVideoGestureOverlay: View {
                     },
                     onDoubleTap: { location in
                         dismissFloatingSliders()
-                        guard configuration.isDoubleTapToSeekEnabled && canSeek else { return }
                         if location.x < w * 0.4 {
+                            guard configuration.isDoubleTapToSeekEnabled && canSeek else { return }
                             triggerSeekRipple(direction: .backward)
                         } else if location.x > w * 0.6 {
+                            guard configuration.isDoubleTapToSeekEnabled && canSeek else { return }
                             triggerSeekRipple(direction: .forward)
+                        } else {
+                            guard configuration.isDoubleTapToPlayPauseEnabled else { return }
+                            triggerCenterPlayPause()
                         }
                     },
                     onHoldBegan: { location in
@@ -281,6 +293,17 @@ public struct AKVideoGestureOverlay: View {
                     .allowsHitTesting(false)
                 }
 
+                // Center Ripple (Double-Tap Play/Pause Indicator Following AKPlayPauseButton Condition)
+                if let activeState = activeCenterState {
+                    AKDoubleTapPlayPauseWaveView(
+                        state: activeState,
+                        autoPlay: coordinator.autoPlay,
+                        theme: theme
+                    )
+                    .opacity(centerPlayPauseOpacity)
+                    .allowsHitTesting(false)
+                }
+
                 // Vertical Floating HUDs with smooth cross-fade animation
                 if isShowingBrightnessHUD {
                     AKBrightnessSlider(brightness: currentBrightness, isCompact: true)
@@ -315,7 +338,8 @@ public struct AKVideoGestureOverlay: View {
                 onVolumeChanged(newVolume)
 
                 // When hardware side volume buttons are pressed, display custom volume slider
-                if panStartVolume == nil {
+                // (Skip showing floating slider if the change was due to a mute/unmute action)
+                if panStartVolume == nil && !AKSystemMediaDeviceManager.shared.isMutingOrUnmuting {
                     hudDismissTask?.cancel()
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isShowingBrightnessHUD = false
@@ -385,6 +409,33 @@ public struct AKVideoGestureOverlay: View {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 activeRippleDirection = nil
+            }
+        }
+    }
+
+    private func triggerCenterPlayPause() {
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+
+        activeCenterState = coordinator.state
+
+        if let onDoubleTapCenterPlayPause {
+            onDoubleTapCenterPlayPause()
+        } else {
+            coordinator.togglePlayPause()
+        }
+
+        withAnimation(.easeOut(duration: 0.15)) {
+            centerPlayPauseOpacity = 1.0
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+            withAnimation(.easeOut(duration: 0.25)) {
+                centerPlayPauseOpacity = 0.0
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                activeCenterState = nil
             }
         }
     }
@@ -506,6 +557,127 @@ struct AKTouchCaptureView: UIViewRepresentable {
 }
 #endif
 
+
+// MARK: - Dynamic Double-Tap Center Play/Pause Wave Component
+/// Follows the exact state condition as AKPlayPauseButton:
+/// - .failed -> reload icon
+/// - .playing -> pause icon
+/// - .loading / .buffering (with autoPlay) -> progress spinner
+/// - default (.paused, .idle, .stopped, etc.) -> play icon
+struct AKDoubleTapPlayPauseWaveView: View {
+    let state: AKPlayerState
+    let autoPlay: Bool
+    let theme: AKPlayerTheme
+
+    @State private var waveScale1: CGFloat = 0.65
+    @State private var waveScale2: CGFloat = 0.65
+    @State private var waveOpacity1: Double = 0.65
+    @State private var waveOpacity2: Double = 0.40
+    @State private var iconScale: CGFloat = 0.55
+    @State private var iconOpacity: Double = 0.0
+
+    // MARK: - State Icon Helper (Matching AKPlayPauseButton)
+
+    private func iconName(for state: AKPlayerState) -> String {
+        switch state {
+        case .failed:
+            return theme.icons.reload
+        case .playing:
+            return theme.icons.pause
+        default:
+            return theme.icons.play
+        }
+    }
+
+    private var stateLabel: String {
+        switch state {
+        case .failed:
+            return "Retry"
+        case .playing:
+            return "Pause"
+        case .loaded, .buffering, .waitingForNetwork:
+            return autoPlay ? "Pause" : "Play"
+        case .loading:
+            return autoPlay ? "Pause" : "Play"
+        default:
+            return "Play"
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            // Concentric Expanding Kinetic Shockwaves
+            ForEach(0..<2, id: \.self) { i in
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.55),
+                                Color.white.opacity(0.08)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: CGFloat(2.5 - Double(i) * 0.7)
+                    )
+                    .frame(width: 90 + CGFloat(i * 24), height: 90 + CGFloat(i * 24))
+                    .scaleEffect(i == 0 ? waveScale1 : waveScale2)
+                    .opacity(i == 0 ? waveOpacity1 : waveOpacity2)
+            }
+
+            // Glassmorphic Glowing Center Core (84pt)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.black.opacity(0.85),
+                            Color.black.opacity(0.62)
+                        ],
+                        center: .center,
+                        startRadius: 8,
+                        endRadius: 42
+                    )
+                )
+                .frame(width: 84, height: 84)
+                .overlay(
+                    Circle().stroke(Color.white.opacity(0.28), lineWidth: 1.2)
+                )
+                .shadow(color: Color.white.opacity(0.18), radius: 10, x: 0, y: 0)
+
+            // Play / Pause Icon + State Label (Following AKPlayPauseButton condition)
+            VStack(spacing: 4) {
+                let name = iconName(for: state)
+                    Image(systemName: name)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
+                        .scaleEffect(iconScale)
+                        .offset(x: name == theme.icons.play ? 2 : 0) // Optical centering for play triangle
+
+                Text(stateLabel)
+                    .font(theme.typography.caption1.weight(.bold))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            .opacity(iconOpacity)
+        }
+        .onAppear {
+            // Spring Recoil
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.58, blendDuration: 0)) {
+                iconScale = 1.0
+                iconOpacity = 1.0
+            }
+
+            // Expanding Shockwaves
+            withAnimation(.easeOut(duration: 0.65)) {
+                waveScale1 = 1.35
+                waveOpacity1 = 0.0
+            }
+            withAnimation(.easeOut(duration: 0.75).delay(0.08)) {
+                waveScale2 = 1.45
+                waveOpacity2 = 0.0
+            }
+        }
+    }
+}
 
 // MARK: - Dynamic Double-Tap Wave & Rotating Icon Component (Compact & Outward Sliding)
 struct AKDoubleTapSeekWaveView: View {

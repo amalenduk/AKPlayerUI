@@ -13,6 +13,31 @@ struct AKPlayerUITests {
         #expect(config.playback.defaultPlaybackSpeed == 1.0)
         #expect(config.playback.openDirectlyInFullScreen == true)
         #expect(config.gestures.isDoubleTapToSeekEnabled == true)
+        #expect(config.overlayPlacement == .sheet)
+        #expect(config.landscapeOverlayPlacement == .sideDrawer)
+    }
+
+    @Test @MainActor func testLandscapePlacementRouting() async throws {
+        let uiState = AKPlayerUIState(placement: .sheet, landscapePlacement: .sideDrawer)
+        #expect(uiState.effectivePlacement() == .sheet)
+        #expect(!uiState.isDrawerActive)
+
+        // Switch to landscape
+        uiState.updateOrientation(isLandscape: true)
+        #expect(uiState.effectivePlacement() == .sideDrawer)
+
+        // Open sheet in landscape -> should activate drawer
+        uiState.presentSheet(.moreOptions)
+        #expect(uiState.isDrawerActive)
+        #expect(uiState.activeInlineOverlay == .moreOptions)
+        #expect(uiState.activeSheet == nil)
+
+        // Rotate back to portrait -> should migrate to native sheet
+        uiState.updateOrientation(isLandscape: false)
+        #expect(uiState.effectivePlacement() == .sheet)
+        #expect(!uiState.isDrawerActive)
+        #expect(uiState.activeSheet == .moreOptions)
+        #expect(uiState.activeInlineOverlay == nil)
     }
 
     @Test func testEqualizerManagerPresets() async throws {
@@ -119,5 +144,33 @@ struct AKPlayerUITests {
         }
         playPauseBtn.onAction()
         #expect(triggeredAction == "toggle")
+    }
+
+    @Test
+    @MainActor
+    func testSystemMediaDeviceManagerMuteAndCallback() {
+        let manager = AKSystemMediaDeviceManager.shared
+        var receivedMuted: Bool?
+        manager.onMuteChanged = { muted in
+            receivedMuted = muted
+        }
+
+        manager.setMute(true)
+        #expect(manager.isMuted == true)
+        #expect(receivedMuted == true)
+
+        manager.setMute(false)
+        #expect(manager.isMuted == false)
+        #expect(receivedMuted == false)
+
+        manager.setMuted(true)
+        #expect(manager.isMuted == true)
+        #expect(receivedMuted == true)
+
+        manager.toggleMute()
+        #expect(manager.isMuted == false)
+        #expect(receivedMuted == false)
+
+        manager.onMuteChanged = nil
     }
 }

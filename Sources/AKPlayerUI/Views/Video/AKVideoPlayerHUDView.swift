@@ -12,6 +12,7 @@ import AKPlayer
 public struct AKVideoPlayerHUDView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     @ObservedObject public var uiState: AKPlayerUIState
+    @ObservedObject private var deviceManager = AKSystemMediaDeviceManager.shared
     @Binding public var isScreenLocked: Bool
     public let theme: AKPlayerTheme
     public var onResetHUDTimer: (() -> Void)?
@@ -126,6 +127,11 @@ public struct AKVideoPlayerHUDView: View {
             }
 
             Spacer()
+
+            // Mute / Unmute Button (Device System Volume)
+            toolButton(icon: deviceManager.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill") {
+                deviceManager.toggleMute()
+            }
 
             // Close / Dismiss Player Button (rest of tools reside in More Options)
             toolButton(icon: "xmark") {
