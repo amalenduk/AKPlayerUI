@@ -654,9 +654,8 @@ public struct AKAudioPlayerView: View {
                 placementMode: placement,
             )
         case .details:
-            AKEqualizerView(
-                equalizer: coordinator.equalizer,
-                placementMode: placement,
+            AKMediaDetailsView(
+                coordinator: coordinator
             )
         case .playbackSpeed:
             AKPlaybackSpeedSheet(

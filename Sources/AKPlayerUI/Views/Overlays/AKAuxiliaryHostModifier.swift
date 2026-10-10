@@ -116,7 +116,7 @@ public struct AKAuxiliaryHostModifier: ViewModifier {
         case .subtitleTracks, .trackSelection:
             AKTrackSelectorSheet(trackType: .subtitle, coordinator: coordinator)
         case .details:
-            AKEqualizerView(equalizer: coordinator.equalizer)
+            AKMediaDetailsView(coordinator: coordinator)
         }
     }
 

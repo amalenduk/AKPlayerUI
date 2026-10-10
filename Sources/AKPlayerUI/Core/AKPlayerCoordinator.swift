@@ -87,6 +87,17 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     @Published public var playbackRate: Float = 1.0
     @Published public var aspectRatio: AKVideoAspectRatio = .fit
     @Published public var isAudioOnly: Bool = false
+    @Published public internal(set) var presentationSize: CGSize = .zero
+    
+    public var effectivePresentationSize: CGSize {
+        if presentationSize != .zero {
+            return presentationSize
+        }
+        if let itemSize = player.player.currentItem?.presentationSize, itemSize != .zero {
+            return itemSize
+        }
+        return .zero
+    }
     
     // MARK: - Active Media & Metadata
     @Published public internal(set) var currentMedia: (any AKPlayable)?

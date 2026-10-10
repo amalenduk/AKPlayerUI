@@ -187,6 +187,9 @@ extension AKPlayerCoordinator {
                 self.capabilities.canPlaySlowReverse = isSupported
             }
             
+        case let .presentationSizeDidChange(size):
+            self.presentationSize = size
+            
         default:
             break
         }
