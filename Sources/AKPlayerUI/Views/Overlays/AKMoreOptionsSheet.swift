@@ -9,7 +9,7 @@ import AKPlayer
 /// Multi-purpose sheet hosting playback controls, tracks, loop modes, and aspect ratio settings.
 /// Structured into clear sections: Quick Controls, Tracks & Accessibility, Playback Loop, and Aspect Ratio.
 public struct AKMoreOptionsSheet: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     public var placementMode: AKOverlayPlacementMode
     public var onSelectAction: ((AKPlayerAuxiliarySheet) -> Void)?
     public var onLockScreen: (() -> Void)?
@@ -116,19 +116,26 @@ public struct AKMoreOptionsSheet: View {
     }
 
     private var gridAirPlayButton: some View {
-        VStack(spacing: AKSpacing.xs) {
-            AKAirPlayButton(
-                isAudioOnly: coordinator.isAudioOnly,
-                size: 54,
-                palette: palette,
-                isGlassStyle: true
-            )
+        Button {
+            AKAirPlayLauncher.shared.showAirPlayPicker()
+        } label: {
+            VStack(spacing: AKSpacing.xs) {
+                AKAirPlayButton(
+                    isAudioOnly: coordinator.isAudioOnly,
+                    size: 54,
+                    palette: palette,
+                    action: {
+                        AKAirPlayLauncher.shared.showAirPlayPicker()
+                    }
+                )
 
-            Text("AirPlay")
-                .font(typography.caption1.weight(.medium))
-                .foregroundColor(palette.textSecondary)
-                .lineLimit(1)
+                Text("AirPlay")
+                    .font(typography.caption1.weight(.medium))
+                    .foregroundColor(palette.textSecondary)
+                    .lineLimit(1)
+            }
         }
+        .buttonStyle(.plain)
     }
 
     private func gridButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
@@ -227,22 +234,23 @@ public struct AKMoreOptionsSheet: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: AKSpacing.md) {
+            HStack(spacing: AKSpacing.sm) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.white.opacity(0.08))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 32, height: 32)
 
                     Image(systemName: icon)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(palette.textPrimary)
                 }
 
                 Text(title)
-                    .font(typography.body.weight(.medium))
+                    .font(typography.subheadline.weight(.medium))
                     .foregroundColor(palette.textPrimary)
+                    .lineLimit(1)
 
-                Spacer()
+                Spacer(minLength: AKSpacing.xs)
 
                 Text(value)
                     .font(typography.footnote)
@@ -250,17 +258,17 @@ public struct AKMoreOptionsSheet: View {
                     .lineLimit(1)
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(palette.textSecondary.opacity(0.6))
             }
             .padding(.horizontal, AKSpacing.md)
-            .padding(.vertical, AKSpacing.sm)
+            .padding(.vertical, AKSpacing.xs)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.white.opacity(0.05))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
         }

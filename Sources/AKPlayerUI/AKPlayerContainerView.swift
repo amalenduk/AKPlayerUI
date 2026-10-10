@@ -9,7 +9,7 @@ import AKPlayer
 /// Master Presentation Container hosting fluid transitions between `.hidden`, `.miniPlayer`, and `.fullScreen`.
 /// Automatically routes between Video and Audio UI layouts based on the active media characteristics.
 public struct AKPlayerContainerView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     
     public init(coordinator: AKPlayerCoordinator = .shared) {
         self.coordinator = coordinator

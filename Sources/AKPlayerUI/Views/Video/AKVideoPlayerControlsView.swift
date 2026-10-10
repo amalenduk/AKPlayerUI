@@ -10,8 +10,8 @@ import AKPlayer
 /// Combines edge gestures, double-tap seek, fast-forward scrub,
 /// screen lock management, and the autohiding glass HUD.
 public struct AKVideoPlayerControlsView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
-    @ObservedObject public var uiState: AKPlayerUIState
+    public var coordinator: AKPlayerCoordinator
+    public var uiState: AKPlayerUIState
     @Binding public var isScreenLocked: Bool
     public let theme: AKPlayerTheme
     

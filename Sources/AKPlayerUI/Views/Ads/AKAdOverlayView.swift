@@ -8,7 +8,7 @@ import SwiftUI
 /// Single Responsibility: Displays native overlay on top of player canvas during AKPlayerItem interstitial ad playback.
 /// Shows countdown badge, sponsor linkout pill, and morphing Skip Ad button.
 public struct AKAdOverlayView: View {
-    @ObservedObject public var adManager: AKAdManager
+    public var adManager: AKAdManager
     public let palette: AKColorPalette
     public let typography: AKTypography
 

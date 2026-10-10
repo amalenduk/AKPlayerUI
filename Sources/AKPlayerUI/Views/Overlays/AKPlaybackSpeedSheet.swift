@@ -8,7 +8,7 @@ import AKPlayer
 
 /// Interactive sheet enabling fine-grained playback speed adjustment via slider, steppers, and preset pills.
 public struct AKPlaybackSpeedSheet: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     @Environment(\.akPlayerTheme) private var theme
     @State private var currentRate: Float = 1.0
     

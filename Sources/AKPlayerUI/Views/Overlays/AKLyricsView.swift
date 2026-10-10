@@ -22,7 +22,7 @@ public struct AKLyricLine: Identifiable, Sendable, Equatable {
 /// Time-synchronized karaoke-style lyrics display view.
 /// Features Apple Music-style gradient edge fading, dynamic active line scaling, and tap-to-seek.
 public struct AKLyricsView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     public var lyrics: [AKLyricLine]
 
     @Environment(\.akPlayerTheme) private var theme

@@ -26,7 +26,7 @@ public struct AKQueueItem: Identifiable, Sendable, Equatable {
 /// Interactive queue management sheet and inline view.
 /// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKQueueSheet: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     public var placementMode: AKOverlayPlacementMode
     public var queueItems: [AKQueueItem]
     

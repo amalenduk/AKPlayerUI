@@ -11,7 +11,7 @@ import AKPlayer
 /// Consumes `AKChapter` directly from the `AKPlayer` core engine.
 /// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKChapterSheet: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     public var placementMode: AKOverlayPlacementMode
     @Environment(\.akPlayerTheme) private var theme
     

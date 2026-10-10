@@ -10,7 +10,7 @@ import AKPlayer
 /// Pure content view displaying detailed technical and static metadata about the currently playing media item.
 /// Renders resolution, duration, live stream vs local file status, file size on disk, audio/subtitle tracks, codecs, and content descriptors.
 public struct AKMediaDetailsView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
 
     @Environment(\.akPlayerTheme) private var theme
 

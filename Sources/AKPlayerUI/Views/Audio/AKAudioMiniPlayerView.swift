@@ -9,7 +9,7 @@ import AKPlayer
 /// Floating / Docked Audio Mini Player Bar that docks above the host tab bar.
 /// Standardized height (~60pt), artwork with animated waveform fallback, tactile controls, and continuous clipping.
 public struct AKAudioMiniPlayerView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     public var theme: AKPlayerTheme
 
     public init(

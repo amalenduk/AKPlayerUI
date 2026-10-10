@@ -6,7 +6,7 @@
 import SwiftUI
 
 public struct AKPlayerOverlayModifier: ViewModifier {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
 
     public init(coordinator: AKPlayerCoordinator = .shared) {
         self.coordinator = coordinator

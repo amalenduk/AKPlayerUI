@@ -10,15 +10,15 @@ import AKPlayer
 /// Encapsulates the top navigation & toolbar, floating bottom control island card,
 /// screen lock controls, and capability-driven actions.
 public struct AKVideoPlayerHUDView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
-    @ObservedObject public var uiState: AKPlayerUIState
-    @ObservedObject private var deviceManager = AKSystemMediaDeviceManager.shared
+    public var coordinator: AKPlayerCoordinator
+    public var uiState: AKPlayerUIState
+    private var deviceManager = AKSystemMediaDeviceManager.shared
     @Binding public var isScreenLocked: Bool
     public let theme: AKPlayerTheme
     public var onResetHUDTimer: (() -> Void)?
     public var onScrubBegan: (() -> Void)?
     public var onScrubChanged: ((TimeInterval) -> Void)?
-
+    
     public init(
         coordinator: AKPlayerCoordinator = .shared,
         uiState: AKPlayerUIState? = nil,
@@ -36,7 +36,7 @@ public struct AKVideoPlayerHUDView: View {
         self.onScrubBegan = onScrubBegan
         self.onScrubChanged = onScrubChanged
     }
-
+    
     public var body: some View {
         if isScreenLocked {
             lockedHUD
@@ -44,7 +44,7 @@ public struct AKVideoPlayerHUDView: View {
             unlockedHUD
         }
     }
-
+    
     // MARK: - Locked State HUD
     private var lockedHUD: some View {
         VStack {
@@ -58,16 +58,16 @@ public struct AKVideoPlayerHUDView: View {
         }
         .transition(.opacity)
     }
-
+    
     // MARK: - Unlocked State HUD
     private var unlockedHUD: some View {
         VStack {
             // Top Navigation & Tool Bar
             topBar
                 .transition(.move(edge: .top).combined(with: .opacity))
-
+            
             Spacer()
-
+            
             // Floating Bottom Island Card
             bottomCard
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -78,7 +78,7 @@ public struct AKVideoPlayerHUDView: View {
                 .padding(.top, 72)
         }
     }
-
+    
     // MARK: - Screen Lock Button
     private var lockButton: some View {
         Button(action: {
@@ -95,7 +95,7 @@ public struct AKVideoPlayerHUDView: View {
         }
         .buttonStyle(.plain)
     }
-
+    
     // MARK: - Top Navigation Bar
     private var topBar: some View {
         HStack(spacing: AKSpacing.md) {
@@ -110,14 +110,14 @@ public struct AKVideoPlayerHUDView: View {
                     .akGlassCircle()
             }
             .buttonStyle(.plain)
-
+            
             // Media Title & Metadata
             VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                 Text(coordinator.currentTitle)
                     .font(theme.typography.headline.weight(.bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
-
+                
                 if !coordinator.currentSubtitle.isEmpty {
                     Text(coordinator.currentSubtitle)
                         .font(theme.typography.caption1)
@@ -125,14 +125,14 @@ public struct AKVideoPlayerHUDView: View {
                         .lineLimit(1)
                 }
             }
-
+            
             Spacer()
-
+            
             // Mute / Unmute Button (Device System Volume)
             toolButton(icon: deviceManager.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill") {
                 deviceManager.toggleMute()
             }
-
+            
             // Close / Dismiss Player Button (rest of tools reside in More Options)
             toolButton(icon: "xmark") {
                 coordinator.dismiss()
@@ -141,7 +141,7 @@ public struct AKVideoPlayerHUDView: View {
         .padding(.horizontal, AKSpacing.xl)
         .padding(.top, AKSpacing.xl)
     }
-
+    
     // MARK: - Floating Bottom Island HUD Card
     private var bottomCard: some View {
         VStack(spacing: AKSpacing.xs) {
@@ -175,7 +175,7 @@ public struct AKVideoPlayerHUDView: View {
                     onResetHUDTimer?()
                 }
             )
-
+            
             // Tier 2: Central Hero Transport Controls
             HStack(spacing: AKSpacing.xl) {
                 // Skip Backward
@@ -190,7 +190,7 @@ public struct AKVideoPlayerHUDView: View {
                     }
                     .scaleEffect(0.9)
                 }
-
+                
                 // Hero Play/Pause Button
                 AKPlayPauseButton(
                     state: coordinator.state,
@@ -201,7 +201,7 @@ public struct AKVideoPlayerHUDView: View {
                     coordinator.player.togglePlayPause()
                     onResetHUDTimer?()
                 }
-
+                
                 // Skip Forward
                 if coordinator.configuration.capabilities.showsSkipButtons {
                     AKSeekButton(
@@ -216,7 +216,7 @@ public struct AKVideoPlayerHUDView: View {
                 }
             }
             .frame(maxWidth: .infinity)
-
+            
             // Tier 3: Thumb Action Corner Controls
             HStack(alignment: .center) {
                 // Left Thumb: Aspect Ratio + Subtitles [CC]
@@ -249,13 +249,13 @@ public struct AKVideoPlayerHUDView: View {
                             .akGlassPill()
                         }
                     }
-
+                    
                     Button(action: {
                         uiState.presentSheet(.subtitleTracks, isAudioOnly: coordinator.isAudioOnly)
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: coordinator.selectedSubtitleTrack?.isOff == false ? "captions.bubble.fill" : "captions.bubble")
-                                    .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: 11, weight: .semibold))
                             Text("CC")
                                 .font(theme.typography.caption2.weight(.bold))
                         }
@@ -265,14 +265,14 @@ public struct AKVideoPlayerHUDView: View {
                         .akGlassPill()
                     }
                     .buttonStyle(.plain)
-
+                    
                     // Audio Tracks Quick Button
                     Button(action: {
                         uiState.presentSheet(.audioTracks, isAudioOnly: coordinator.isAudioOnly)
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: "speaker.wave.2.fill")
-                                    .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: 11, weight: .semibold))
                             Text("Audio")
                                 .font(theme.typography.caption2.weight(.bold))
                         }
@@ -283,24 +283,12 @@ public struct AKVideoPlayerHUDView: View {
                     }
                     .buttonStyle(.plain)
                 }
-
+                
                 Spacer()
-
+                
                 // Right Thumb: Playback Speed Pill + More Actions [≡]
                 HStack(spacing: AKSpacing.xs) {
-                    // Playback Speed Pill (e.g. 1x)
-                    Button(action: {
-                        uiState.presentSheet(.playbackSpeed, isAudioOnly: coordinator.isAudioOnly)
-                    }) {
-                        Text(AKPlaybackSpeedSheet.format(rate: coordinator.playbackRate))
-                            .font(theme.typography.caption2.weight(.bold))
-                            .foregroundColor(coordinator.playbackRate != 1.0 ? theme.palette.accent : theme.palette.textPrimary)
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 4)
-                            .akGlassPill()
-                    }
-                    .buttonStyle(.plain)
-
+                    
                     // More Actions [≡] Button
                     Button(action: {
                         uiState.presentSheet(.moreOptions, isAudioOnly: coordinator.isAudioOnly)
@@ -342,7 +330,7 @@ public struct AKVideoPlayerHUDView: View {
         .padding(.bottom, AKSpacing.xs)
         .fixedSize(horizontal: false, vertical: true)
     }
-
+    
     private func toolButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)

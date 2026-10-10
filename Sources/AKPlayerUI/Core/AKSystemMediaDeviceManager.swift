@@ -5,6 +5,7 @@
 
 import Foundation
 #if canImport(Combine)
+import Observation
 import Combine
 #endif
 #if canImport(UIKit)
@@ -18,8 +19,9 @@ import MediaPlayer
 #endif
 
 /// Manages hardware system volume and device display brightness without modifying player-level audio.
+@Observable
 @MainActor
-public final class AKSystemMediaDeviceManager: ObservableObject {
+public final class AKSystemMediaDeviceManager {
     public static let shared = AKSystemMediaDeviceManager()
     
     #if os(iOS)
@@ -31,13 +33,13 @@ public final class AKSystemMediaDeviceManager: ObservableObject {
     private var lastNonZeroVolume: Float = 0.5
 
     /// Whether the system audio is currently muted (volume is 0).
-    @Published public private(set) var isMuted: Bool = false
+    public private(set) var isMuted: Bool = false
 
     /// Current hardware system output volume (0.0 ... 1.0).
-    @Published public private(set) var currentVolume: Float = 0.5
+    public private(set) var currentVolume: Float = 0.5
 
     /// Current device screen brightness (0.0 ... 1.0).
-    @Published public private(set) var currentBrightness: Float = 0.5
+    public private(set) var currentBrightness: Float = 0.5
 
     /// Callback invoked when hardware side buttons or software volume changes (0.0 ... 1.0).
     public var onVolumeChanged: ((Float) -> Void)?
@@ -136,7 +138,7 @@ public final class AKSystemMediaDeviceManager: ObservableObject {
     }
 
     /// Flag indicating if a mute/unmute transition is underway, used to prevent floating volume HUD popups.
-    @Published public private(set) var isMutingOrUnmuting: Bool = false
+    public private(set) var isMutingOrUnmuting: Bool = false
 
     /// Sets the mute status of the system audio.
     public func setMute(_ muted: Bool) {

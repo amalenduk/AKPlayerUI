@@ -10,8 +10,8 @@ import AKPlayer
 /// Orchestrates the underlying video surface, interactive gestures & autohiding HUD controls,
 /// native ad overlays, and auxiliary sheet/drawer presentations.
 public struct AKVideoPlayerView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
-    @ObservedObject public var uiState: AKPlayerUIState
+    public var coordinator: AKPlayerCoordinator
+    public var uiState: AKPlayerUIState
     public let theme: AKPlayerTheme
     
     @State private var isScreenLocked: Bool = false

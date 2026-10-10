@@ -5,6 +5,7 @@
 
 import Foundation
 import SwiftUI
+import Observation
 import Combine
 
 /// Standard commercial center frequencies for 10-band audio graphic equalizers.
@@ -83,8 +84,9 @@ public enum AKEqualizerPreset: String, CaseIterable, Identifiable, Sendable, Cod
 }
 
 /// Standalone Audio Equalizer & DSP Manager with automatic persistent storage.
+@Observable
 @MainActor
-public final class AKEqualizerManager: ObservableObject, @unchecked Sendable {
+public final class AKEqualizerManager: @unchecked Sendable {
     // MARK: - Persistence Keys
     public enum StorageKeys {
         public static let isEnabled = "com.akplayer.equalizer.isEnabled"
@@ -97,25 +99,25 @@ public final class AKEqualizerManager: ObservableObject, @unchecked Sendable {
     public let isPersistenceEnabled: Bool
     private var isInitializing: Bool = true
 
-    @Published public var isEnabled: Bool = false {
+    public var isEnabled: Bool = false {
         didSet {
             persistSettings()
         }
     }
 
-    @Published public var activePreset: AKEqualizerPreset = .flat {
+    public var activePreset: AKEqualizerPreset = .flat {
         didSet {
             persistSettings()
         }
     }
 
-    @Published public var bands: [AKEqualizerBand] = AKEqualizerBand.tenBands {
+    public var bands: [AKEqualizerBand] = AKEqualizerBand.tenBands {
         didSet {
             persistSettings()
         }
     }
 
-    @Published public var preampGain: Float = 0.0 { // -6.0 dB ... +6.0 dB
+    public var preampGain: Float = 0.0 { // -6.0 dB ... +6.0 dB
         didSet {
             persistSettings()
         }

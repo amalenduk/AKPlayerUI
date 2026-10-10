@@ -18,7 +18,7 @@ extension AKTrackType {
         case .videoAlternative: return "Alternative Angles"
         }
     }
-
+    
     public var iconName: String {
         switch self {
         case .audio: return "speaker.wave.2.fill"
@@ -28,6 +28,21 @@ extension AKTrackType {
         case .videoAlternative: return "video.badge.plus"
         }
     }
+    
+    public var offSubtitle: String {
+        switch self {
+        case .subtitle:
+            return "Disable subtitles"
+        case .closedCaption:
+            return "Disable closed captions"
+        case .audio:
+            return "Mute audio"
+        case .audioDescription:
+            return "Disable audio description"
+        case .videoAlternative:
+            return "Default video angle"
+        }
+    }
 }
 
 /// Interactive sheet enabling users to select media track options for a specific AKTrackType
@@ -35,11 +50,11 @@ extension AKTrackType {
 /// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKTrackSelectorSheet: View {
     public let trackType: AKTrackType
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     public var placementMode: AKOverlayPlacementMode
-
+    
     @Environment(\.akPlayerTheme) private var theme
-
+    
     public init(
         trackType: AKTrackType = .subtitle,
         coordinator: AKPlayerCoordinator = .shared,
@@ -49,45 +64,23 @@ public struct AKTrackSelectorSheet: View {
         self.coordinator = coordinator
         self.placementMode = placementMode
     }
-
+    
     private var availableTracks: [AKMediaTrackOption] {
         coordinator.availableTracks(for: trackType)
     }
-
+    
     private var offTrack: AKMediaTrackOption? {
         availableTracks.first(where: { $0.isOff })
     }
-
+    
     private var contentTracks: [AKMediaTrackOption] {
         availableTracks.filter { !$0.isOff }
     }
-
+    
     private var selectedTrack: AKMediaTrackOption? {
         coordinator.selectedTrack(for: trackType)
     }
-
-    private var offSubtitle: String {
-        switch trackType {
-        case .subtitle:
-            return "Disable subtitles"
-        case .closedCaption:
-            return "Disable closed captions"
-        case .audio, .audioDescription:
-            return "Mute audio"
-        default:
-            return "None"
-        }
-    }
-
-    private var offIconName: String {
-        switch trackType {
-        case .audio, .audioDescription:
-            return "speaker.slash"
-        default:
-            return "slash.circle"
-        }
-    }
-
+    
     public var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(spacing: AKSpacing.xs) {
@@ -103,12 +96,12 @@ public struct AKTrackSelectorSheet: View {
                         offRow(track: off, isSelected: isOffSelected) {
                             coordinator.selectTrack(off, for: trackType)
                         }
-
+                        
                         if !contentTracks.isEmpty {
                             sectionDivider(title: "AVAILABLE TRACKS")
                         }
                     }
-
+                    
                     // 2. Available Content / Language Tracks
                     ForEach(contentTracks) { track in
                         let isSelected = track.id == selectedTrack?.id
@@ -123,31 +116,49 @@ public struct AKTrackSelectorSheet: View {
             .padding(.bottom, AKSpacing.xxl)
         }
     }
+    
+    private func disabledTrackIcon(isSelected: Bool) -> some View {
+        ZStack {
+            Image(systemName: trackType.iconName)
+                .font(theme.typography.subheadline.weight(.semibold))
+                .foregroundColor(isSelected ? theme.palette.accent : theme.palette.foregroundTertiary)
+
+            // Cutout gap for clean contrast across solid glyphs
+            Capsule()
+                .fill(theme.palette.surfaceElevated)
+                .frame(width: 4, height: 20)
+                .rotationEffect(.degrees(60))
+
+            // 2-pixel disabled slash line drawn at 60 degrees above the icon
+            Capsule()
+                .fill(isSelected ? theme.palette.accent : theme.palette.foregroundTertiary)
+                .frame(width: 2, height: 18)
+                .rotationEffect(.degrees(60))
+        }
+        .frame(width: 28, height: 28)
+        .background(
+            Circle()
+                .fill(isSelected ? theme.palette.accent.opacity(0.18) : Color.white.opacity(0.05))
+        )
+    }
 
     private func offRow(track: AKMediaTrackOption, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: AKSpacing.sm) {
-                Image(systemName: offIconName)
-                    .font(theme.typography.subheadline.weight(.semibold))
-                    .foregroundColor(isSelected ? theme.palette.accent : theme.palette.foregroundTertiary)
-                    .frame(width: 28, height: 28)
-                    .background(
-                        Circle()
-                            .fill(isSelected ? theme.palette.accent.opacity(0.18) : Color.white.opacity(0.05))
-                    )
-
+                disabledTrackIcon(isSelected: isSelected)
+                
                 VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                     Text(track.title)
                         .font(isSelected ? theme.typography.subheadline.weight(.semibold) : theme.typography.subheadline.weight(.medium))
                         .foregroundColor(isSelected ? theme.palette.foregroundPrimary : theme.palette.foregroundSecondary)
-
-                    Text(offSubtitle)
+                    
+                    Text(trackType.offSubtitle)
                         .font(theme.typography.badgeSmall)
                         .foregroundColor(theme.palette.foregroundTertiary)
                 }
-
+                
                 Spacer()
-
+                
                 if isSelected {
                     Image(systemName: "checkmark")
                         .font(theme.typography.button)
@@ -167,14 +178,14 @@ public struct AKTrackSelectorSheet: View {
         }
         .buttonStyle(.plain)
     }
-
+    
     private func sectionDivider(title: String) -> some View {
         HStack(spacing: AKSpacing.sm) {
             Text(title)
                 .font(theme.typography.badgeSmall.weight(.bold))
                 .foregroundColor(theme.palette.foregroundTertiary)
                 .kerning(1.2)
-
+            
             Rectangle()
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
@@ -182,7 +193,7 @@ public struct AKTrackSelectorSheet: View {
         .padding(.top, AKSpacing.sm)
         .padding(.bottom, AKSpacing.xxxs)
     }
-
+    
     private func trackRow(track: AKMediaTrackOption, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: AKSpacing.sm) {
@@ -190,16 +201,16 @@ public struct AKTrackSelectorSheet: View {
                     Text(track.title)
                         .font(isSelected ? theme.typography.subheadline.weight(.semibold) : theme.typography.subheadline.weight(.medium))
                         .foregroundColor(isSelected ? theme.palette.foregroundPrimary : theme.palette.foregroundSecondary)
-
+                    
                     if !track.languageCode.isEmpty {
                         Text(track.languageCode.uppercased())
                             .font(theme.typography.badgeSmall)
                             .foregroundColor(theme.palette.foregroundTertiary)
                     }
                 }
-
+                
                 Spacer()
-
+                
                 if isSelected {
                     Image(systemName: "checkmark")
                         .font(theme.typography.button)
@@ -219,12 +230,12 @@ public struct AKTrackSelectorSheet: View {
         }
         .buttonStyle(.plain)
     }
-
+    
     private func emptyState(title: String, subtitle: String) -> some View {
         VStack(spacing: AKSpacing.sm) {
             Spacer(minLength: AKSpacing.xxxl)
-            Image(systemName: trackType == .audio ? "waveform.slash" : "captions.bubble")
-                .font(.system(size: 40))
+            Image(systemName: trackType.iconName)
+                .font(.system(size: 44))
                 .foregroundColor(theme.palette.foregroundTertiary)
             Text(title)
                 .font(theme.typography.subheadline.weight(.semibold))

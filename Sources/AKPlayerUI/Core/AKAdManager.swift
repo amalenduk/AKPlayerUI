@@ -4,26 +4,28 @@
 //
 
 import Foundation
+import Observation
 import Combine
 import AKPlayer
 
 /// Manages runtime state for native interstitial ad playback (`AKPlayerItem` streams).
 /// Completely decouples high-frequency 1-second countdown ticks from the main player coordinator.
+@Observable
 @MainActor
-public final class AKAdManager: ObservableObject, @unchecked Sendable {
-    @Published public internal(set) var markers: [AKInterstitialMarker] = []
-    @Published public private(set) var isAdActive: Bool = false
-    @Published public private(set) var currentAdIndex: Int = 0
-    @Published public private(set) var totalAdsInPod: Int = 0
-    @Published public private(set) var adDuration: TimeInterval = 0
-    @Published public private(set) var adTimeRemaining: TimeInterval = 0
-    @Published public private(set) var allowsSkip: Bool = false
-    @Published public private(set) var isAdSkippable: Bool = false
-    @Published public private(set) var adSkipCountdown: TimeInterval = 0
-    @Published public private(set) var skipCountdownDuration: TimeInterval = 5.0
-    @Published public private(set) var sponsorName: String?
-    @Published public private(set) var sponsorLinkURL: URL?
-    @Published public var interstitialPlaybackState: AKInterstitialPlaybackState = .idle
+public final class AKAdManager: @unchecked Sendable {
+    public internal(set) var markers: [AKInterstitialMarker] = []
+    public private(set) var isAdActive: Bool = false
+    public private(set) var currentAdIndex: Int = 0
+    public private(set) var totalAdsInPod: Int = 0
+    public private(set) var adDuration: TimeInterval = 0
+    public private(set) var adTimeRemaining: TimeInterval = 0
+    public private(set) var allowsSkip: Bool = false
+    public private(set) var isAdSkippable: Bool = false
+    public private(set) var adSkipCountdown: TimeInterval = 0
+    public private(set) var skipCountdownDuration: TimeInterval = 5.0
+    public private(set) var sponsorName: String?
+    public private(set) var sponsorLinkURL: URL?
+    public var interstitialPlaybackState: AKInterstitialPlaybackState = .idle
 
     public var cuePoints: [TimeInterval] {
         markers.map(\.time)

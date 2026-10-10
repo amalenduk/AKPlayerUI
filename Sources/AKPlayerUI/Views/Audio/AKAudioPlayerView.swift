@@ -12,8 +12,8 @@ import AKPlayer
 /// 2. `.sheet`: Interactive Apple-style modal bottom sheet with fractional detents.
 /// 3. `.sideDrawer`: Elevated slide-in frosted glass drawer panel.
 public struct AKAudioPlayerView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
-    @ObservedObject public var uiState: AKPlayerUIState
+    public var coordinator: AKPlayerCoordinator
+    @Bindable public var uiState: AKPlayerUIState
     public var theme: AKPlayerTheme
     
     @State private var isFavorite: Bool = false

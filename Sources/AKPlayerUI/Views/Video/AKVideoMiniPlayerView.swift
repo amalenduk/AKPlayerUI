@@ -10,7 +10,7 @@ import AKPlayer
 /// Standardized height (~58pt), comfortable touch targets, continuous corner clipping, and live stream awareness.
 /// Driven directly by `AKPlayer` with an expand callback for host navigation.
 public struct AKVideoMiniPlayerView: View {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
+    public var coordinator: AKPlayerCoordinator
     public let player: AKPlayer
     public let onExpand: () -> Void
     public var onDismiss: (() -> Void)?

@@ -10,7 +10,7 @@ import AKPlayer
 /// Displays dynamic cubic spline frequency curves, quick presets, individual band sliders, and preamp gain.
 /// Standardized inside AKAuxiliaryContainerView to eliminate duplicate headers, duplicate drag handles, and duplicate close buttons.
 public struct AKEqualizerView: View {
-    @ObservedObject public var equalizer: AKEqualizerManager
+    @Bindable public var equalizer: AKEqualizerManager
     public var placementMode: AKOverlayPlacementMode
 
     @Environment(\.akPlayerTheme) private var theme

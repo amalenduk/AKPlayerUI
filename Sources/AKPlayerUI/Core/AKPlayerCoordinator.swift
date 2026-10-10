@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Observation
 import Combine
 import AVFoundation
 import CoreMedia
@@ -12,8 +13,9 @@ import AKPlayer
 /// Central player coordinator managing `AKPlayer` engine lifecycle, playback state,
 /// multiplatform presentation modes, 10-band equalizer DSP, and native ad overlays.
 /// Strictly relies on `AKPlayer` as the single core backbone.
+@Observable
 @MainActor
-public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked Sendable {
+public final class AKPlayerCoordinator: NSObject, @unchecked Sendable {
     
     public static let shared = AKPlayerCoordinator()
     
@@ -21,9 +23,9 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     public let player: AKPlayer
     
     // MARK: - Presentation & Navigation
-    @Published public var presentationMode: AKPlayerPresentationMode = .hidden
-    @Published public var isAtLiveEdge: Bool = true
-    @Published public var liveOffset: TimeInterval = 0
+    public var presentationMode: AKPlayerPresentationMode = .hidden
+    public var isAtLiveEdge: Bool = true
+    public var liveOffset: TimeInterval = 0
     
     // MARK: - Dedicated UI Presentation State (Separated into AKPlayerUIState)
     public let uiState: AKPlayerUIState
@@ -77,17 +79,17 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     }
     
     // MARK: - Active Playback State (Driven by AKPlayer)
-    @Published public internal(set) var state: AKPlayerState = .idle
-    @Published public internal(set) var autoPlay: Bool = false
-    @Published public internal(set) var currentTime: TimeInterval = 0
-    @Published public internal(set) var duration: TimeInterval = 0
-    @Published public internal(set) var loadedTimeRanges: [CMTimeRange] = []
-    @Published public internal(set) var playerVolume: Float = 0
-    @Published public internal(set) var playerIsMuted: Bool = false
-    @Published public var playbackRate: Float = 1.0
-    @Published public var aspectRatio: AKVideoAspectRatio = .fit
-    @Published public var isAudioOnly: Bool = false
-    @Published public internal(set) var presentationSize: CGSize = .zero
+    public internal(set) var state: AKPlayerState = .idle
+    public internal(set) var autoPlay: Bool = false
+    public internal(set) var currentTime: TimeInterval = 0
+    public internal(set) var duration: TimeInterval = 0
+    public internal(set) var loadedTimeRanges: [CMTimeRange] = []
+    public internal(set) var playerVolume: Float = 0
+    public internal(set) var playerIsMuted: Bool = false
+    public var playbackRate: Float = 1.0
+    public var aspectRatio: AKVideoAspectRatio = .fit
+    public var isAudioOnly: Bool = false
+    public internal(set) var presentationSize: CGSize = .zero
     
     public var effectivePresentationSize: CGSize {
         if presentationSize != .zero {
@@ -100,9 +102,9 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     }
     
     // MARK: - Active Media & Metadata
-    @Published public internal(set) var currentMedia: (any AKPlayable)?
-    @Published public internal(set) var metadata: AKMediaStaticMetadata = .init()
-    @Published public internal(set) var timedMetadata: [AVMetadataItem] = []
+    public internal(set) var currentMedia: (any AKPlayable)?
+    public internal(set) var metadata: AKMediaStaticMetadata = .init()
+    public internal(set) var timedMetadata: [AVMetadataItem] = []
     
     public var currentTitle: String {
         metadata.title ?? ""
@@ -144,39 +146,39 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
         return player.isLive
     }
     
-    @Published public internal(set) var chapters: [AKChapter] = []
-    @Published public internal(set) var activeChapter: AKChapter?
+    public internal(set) var chapters: [AKChapter] = []
+    public internal(set) var activeChapter: AKChapter?
     public var interstitialMarkers: [AKInterstitialMarker] {
         adManager.markers
     }
-    @Published public var repeatMode: AKRepeatMode = .off
-    @Published public var isShuffled: Bool = false
+    public var repeatMode: AKRepeatMode = .off
+    public var isShuffled: Bool = false
     
     // MARK: - Media Tracks (from AKPlayer)
-    @Published public internal(set) var availableAudioTracks: [AKMediaTrackOption] = []
-    @Published public internal(set) var selectedAudioTrack: AKMediaTrackOption?
-    @Published public internal(set) var availableSubtitleTracks: [AKMediaTrackOption] = []
-    @Published public internal(set) var selectedSubtitleTrack: AKMediaTrackOption?
-    @Published public internal(set) var availableClosedCaptionTracks: [AKMediaTrackOption] = []
-    @Published public internal(set) var selectedClosedCaptionTrack: AKMediaTrackOption?
-    @Published public internal(set) var availableAudioDescriptionTracks: [AKMediaTrackOption] = []
-    @Published public internal(set) var selectedAudioDescriptionTrack: AKMediaTrackOption?
-    @Published public internal(set) var availableVideoAlternativeTracks: [AKMediaTrackOption] = []
-    @Published public internal(set) var selectedVideoAlternativeTrack: AKMediaTrackOption?
+    public internal(set) var availableAudioTracks: [AKMediaTrackOption] = []
+    public internal(set) var selectedAudioTrack: AKMediaTrackOption?
+    public internal(set) var availableSubtitleTracks: [AKMediaTrackOption] = []
+    public internal(set) var selectedSubtitleTrack: AKMediaTrackOption?
+    public internal(set) var availableClosedCaptionTracks: [AKMediaTrackOption] = []
+    public internal(set) var selectedClosedCaptionTrack: AKMediaTrackOption?
+    public internal(set) var availableAudioDescriptionTracks: [AKMediaTrackOption] = []
+    public internal(set) var selectedAudioDescriptionTrack: AKMediaTrackOption?
+    public internal(set) var availableVideoAlternativeTracks: [AKMediaTrackOption] = []
+    public internal(set) var selectedVideoAlternativeTrack: AKMediaTrackOption?
     
     // MARK: - Native Engine Capabilities
-    @Published public internal(set) var capabilities: AKMediaCapabilities = .empty
+    public internal(set) var capabilities: AKMediaCapabilities = .empty
     
     // MARK: - Configuration & Theming
-    @Published public var configuration: AKPlayerUIConfiguration = .automatic
-    @Published public var theme: AKPlayerTheme = .appleMusic
+    public var configuration: AKPlayerUIConfiguration = .automatic
+    public var theme: AKPlayerTheme = .appleMusic
     
     // MARK: - Domain Sub-Managers (Composed)
     public let equalizer: AKEqualizerManager
     public let adManager: AKAdManager
     
-    var cancellables = Set<AnyCancellable>()
-    var playerEventsTask: Task<Void, Never>?
+    @ObservationIgnored var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored var playerEventsTask: Task<Void, Never>?
     
     // MARK: - Initialization & Lifecycle
     
@@ -206,7 +208,6 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
         }
         super.init()
         setupAdManagerCallbacks()
-        bindUIState()
         startObservingPlayerEvents()
         Task { @MainActor [weak self] in
             try? await self?.player.prepare()
@@ -219,11 +220,7 @@ public final class AKPlayerCoordinator: NSObject, ObservableObject, @unchecked S
     }
     
     private func bindUIState() {
-        uiState.objectWillChange
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
+        // uiState is @Observable; nested properties are tracked automatically by Observation.
     }
     
     deinit {

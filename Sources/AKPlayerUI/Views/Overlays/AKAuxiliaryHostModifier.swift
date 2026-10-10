@@ -8,8 +8,8 @@ import AKPlayer
 
 /// ViewModifier hosting auxiliary surfaces (modal sheets and side-drawer overlays).
 public struct AKAuxiliaryHostModifier: ViewModifier {
-    @ObservedObject public var coordinator: AKPlayerCoordinator
-    @ObservedObject public var uiState: AKPlayerUIState
+    public var coordinator: AKPlayerCoordinator
+    @Bindable public var uiState: AKPlayerUIState
     public let theme: AKPlayerTheme
     public var onLockScreen: (() -> Void)?
 

@@ -4,27 +4,28 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
 /// Dedicated UI Presentation State Manager for AKPlayerUI.
 ///
 /// Encapsulates view presentation, modal sheets, and landscape side drawer routing.
+@Observable
 @MainActor
-public final class AKPlayerUIState: ObservableObject {
+public final class AKPlayerUIState {
     /// Active placement mode for auxiliary surfaces in portrait orientation (default: .sheet).
-    @Published public var overlayPlacement: AKOverlayPlacementMode
+    public var overlayPlacement: AKOverlayPlacementMode
 
     /// Active placement mode for auxiliary surfaces in landscape orientation (default: .sideDrawer).
-    @Published public var landscapeOverlayPlacement: AKOverlayPlacementMode
+    public var landscapeOverlayPlacement: AKOverlayPlacementMode
 
     /// Observed orientation state (true if UI is in landscape).
-    @Published public var isLandscape: Bool = false
+    public var isLandscape: Bool = false
 
     /// Currently active modal sheet.
-    @Published public var activeSheet: AKPlayerAuxiliarySheet? = nil
+    public var activeSheet: AKPlayerAuxiliarySheet? = nil
 
     /// Currently active side drawer overlay in landscape.
-    @Published public var activeInlineOverlay: AKPlayerAuxiliarySheet? = nil
+    public var activeInlineOverlay: AKPlayerAuxiliarySheet? = nil
 
     public init(
         placement: AKOverlayPlacementMode = .sheet,
