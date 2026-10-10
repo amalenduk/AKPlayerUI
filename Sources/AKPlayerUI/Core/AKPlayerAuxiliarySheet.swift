@@ -13,6 +13,9 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
     case chapters
     case audioTracks
     case subtitleTracks
+    case closedCaptionTracks
+    case audioDescriptionTracks
+    case videoAlternativeTracks
     case trackSelection
     case details
     case playbackSpeed
@@ -22,16 +25,19 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .queue:          return "Queue"
-        case .lyrics:         return "Lyrics"
-        case .equalizer:      return "10-Band Graphic Equalizer"
-        case .chapters:       return "Chapters"
-        case .audioTracks:    return "Audio Tracks"
-        case .subtitleTracks: return "Subtitles"
-        case .trackSelection: return "Audio & Subtitles"
-        case .details:        return "Media Details"
-        case .playbackSpeed:  return "Playback Speed"
-        case .moreOptions:    return "More Options"
+        case .queue:                  return "Queue"
+        case .lyrics:                 return "Lyrics"
+        case .equalizer:              return "10-Band Graphic Equalizer"
+        case .chapters:               return "Chapters"
+        case .audioTracks:            return "Audio Tracks"
+        case .subtitleTracks:         return "Subtitles"
+        case .closedCaptionTracks:    return "Closed Captions"
+        case .audioDescriptionTracks: return "Audio Description"
+        case .videoAlternativeTracks: return "Alternative Angles"
+        case .trackSelection:         return "Audio & Subtitles"
+        case .details:                return "Media Details"
+        case .playbackSpeed:          return "Playback Speed"
+        case .moreOptions:            return "More Options"
         }
     }
 
@@ -51,16 +57,19 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
 
     public var systemIconName: String {
         switch self {
-        case .queue:          return "list.bullet"
-        case .lyrics:         return "quote.bubble"
-        case .equalizer:      return "slider.vertical.3"
-        case .chapters:       return "bookmark"
-        case .audioTracks:    return "speaker.wave.2.fill"
-        case .subtitleTracks: return "captions.bubble.fill"
-        case .trackSelection: return "waveform.badge.magnifyingglass"
-        case .details:        return "info.circle"
-        case .playbackSpeed:  return "speedometer"
-        case .moreOptions:    return "line.3.horizontal"
+        case .queue:                  return "list.bullet"
+        case .lyrics:                 return "quote.bubble"
+        case .equalizer:              return "slider.vertical.3"
+        case .chapters:               return "bookmark"
+        case .audioTracks:            return "speaker.wave.2.fill"
+        case .subtitleTracks:         return "captions.bubble.fill"
+        case .closedCaptionTracks:    return "captions.bubble"
+        case .audioDescriptionTracks: return "person.wave.2.fill"
+        case .videoAlternativeTracks: return "video.badge.plus"
+        case .trackSelection:         return "waveform.badge.magnifyingglass"
+        case .details:                return "info.circle"
+        case .playbackSpeed:          return "speedometer"
+        case .moreOptions:            return "line.3.horizontal"
         }
     }
 }

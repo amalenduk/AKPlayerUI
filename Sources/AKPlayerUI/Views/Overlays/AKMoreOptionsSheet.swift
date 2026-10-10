@@ -6,13 +6,10 @@
 import SwiftUI
 import AKPlayer
 
-/// Rich action sheet offering quick access to secondary player features:
-/// Audio tracks, subtitles, equalizer, chapters, sleep timer, screen lock, and loop modes.
-/// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
+/// Multi-purpose sheet hosting playback controls, tracks, loop modes, and aspect ratio settings.
+/// Structured into clear sections: Quick Controls, Tracks & Accessibility, Playback Loop, and Aspect Ratio.
 public struct AKMoreOptionsSheet: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
-    public var customPalette: AKColorPalette?
-    public var customTypography: AKTypography?
     public var placementMode: AKOverlayPlacementMode
     public var onSelectAction: ((AKPlayerAuxiliarySheet) -> Void)?
     public var onLockScreen: (() -> Void)?
@@ -20,13 +17,8 @@ public struct AKMoreOptionsSheet: View {
 
     @Environment(\.akPlayerTheme) private var theme
 
-    public var palette: AKColorPalette {
-        customPalette ?? theme.palette
-    }
-
-    public var typography: AKTypography {
-        customTypography ?? theme.typography
-    }
+    private var palette: AKColorPalette { theme.palette }
+    private var typography: AKTypography { theme.typography }
 
     private let columns = [
         GridItem(.flexible()),
@@ -37,16 +29,12 @@ public struct AKMoreOptionsSheet: View {
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
-        palette: AKColorPalette? = nil,
-        typography: AKTypography? = nil,
         placementMode: AKOverlayPlacementMode = .sheet,
         onSelectAction: ((AKPlayerAuxiliarySheet) -> Void)? = nil,
         onLockScreen: (() -> Void)? = nil,
         onDismiss: (() -> Void)? = nil
     ) {
         self.coordinator = coordinator
-        self.customPalette = palette
-        self.customTypography = typography
         self.placementMode = placementMode
         self.onSelectAction = onSelectAction
         self.onLockScreen = onLockScreen
@@ -56,15 +44,17 @@ public struct AKMoreOptionsSheet: View {
     public var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: AKSpacing.xl) {
-                // Quick Action Buttons Grid (4 columns)
-                actionGrid
-                    .padding(.horizontal, AKSpacing.md)
+                // 1. Quick Playback Controls Grid
+                quickControlsSection
                     .padding(.top, AKSpacing.md)
 
-                // Loop & Shuffle Section
+                // 2. Tracks & Accessibility Section (Audio, Subtitles, Captions, AD, Others)
+                tracksSection
+
+                // 3. Loop & Shuffle Section
                 loopSection
 
-                // Aspect Ratio Section
+                // 4. Aspect Ratio Section
                 aspectRatioSection
 
                 Spacer(minLength: AKSpacing.xl)
@@ -72,58 +62,56 @@ public struct AKMoreOptionsSheet: View {
         }
     }
 
-    // MARK: - Subviews
+    // MARK: - Quick Controls Section
 
-    private var actionGrid: some View {
-        LazyVGrid(columns: columns, spacing: AKSpacing.lg) {
-            // Audio Tracks
-            gridButton(title: "Audio", icon: "speaker.wave.2.fill") {
-                onSelectAction?(.audioTracks)
+    private var quickControlsSection: some View {
+        VStack(alignment: .leading, spacing: AKSpacing.sm) {
+            Text("QUICK CONTROLS")
+                .font(typography.badgeSmall)
+                .foregroundColor(palette.textSecondary.opacity(0.7))
+                .padding(.horizontal, AKSpacing.lg)
+
+            LazyVGrid(columns: columns, spacing: AKSpacing.lg) {
+                // Playback Speed
+                gridButton(title: "Speed", icon: "speedometer") {
+                    onSelectAction?(.playbackSpeed)
+                }
+
+                // Equalizer
+                gridButton(title: "Equalizer", icon: "slider.vertical.3") {
+                    onSelectAction?(.equalizer)
+                }
+
+                // Chapters
+                gridButton(title: "Chapters", icon: "bookmark.fill") {
+                    onSelectAction?(.chapters)
+                }
+
+                // Media Details
+                gridButton(title: "Details", icon: "info.circle") {
+                    onSelectAction?(.details)
+                }
+
+                // Lock Screen
+                gridButton(title: "Lock Screen", icon: "lock.fill") {
+                    onLockScreen?()
+                    onDismiss?()
+                }
+
+                // Up Next / Queue
+                gridButton(title: "Up Next", icon: "list.bullet") {
+                    onSelectAction?(.queue)
+                }
+
+                // Lyrics
+                gridButton(title: "Lyrics", icon: "quote.bubble") {
+                    onSelectAction?(.lyrics)
+                }
+
+                // AirPlay
+                gridAirPlayButton
             }
-
-            // Subtitles
-            gridButton(title: "Subtitles", icon: "captions.bubble.fill") {
-                onSelectAction?(.subtitleTracks)
-            }
-
-            // Equalizer
-            gridButton(title: "Equalizer", icon: "slider.vertical.3") {
-                onSelectAction?(.equalizer)
-            }
-
-            // Chapters
-            gridButton(title: "Chapters", icon: "bookmark.fill") {
-                onSelectAction?(.chapters)
-            }
-
-            // Playback Speed
-            gridButton(title: "Speed", icon: "speedometer") {
-                onSelectAction?(.playbackSpeed)
-            }
-
-            // Lock Screen
-            gridButton(title: "Lock Screen", icon: "lock.fill") {
-                onLockScreen?()
-                onDismiss?()
-            }
-
-            // Media Info
-            gridButton(title: "Details", icon: "info.circle") {
-                onSelectAction?(.details)
-            }
-
-            // Up Next / Queue
-            gridButton(title: "Up Next", icon: "list.bullet") {
-                onSelectAction?(.queue)
-            }
-
-            // Lyrics
-            gridButton(title: "Lyrics", icon: "quote.bubble") {
-                onSelectAction?(.lyrics)
-            }
-
-            // AirPlay
-            gridAirPlayButton
+            .padding(.horizontal, AKSpacing.md)
         }
     }
 
@@ -167,6 +155,119 @@ public struct AKMoreOptionsSheet: View {
         }
         .buttonStyle(.plain)
     }
+
+    // MARK: - Tracks & Accessibility Section
+
+    private var tracksSection: some View {
+        VStack(alignment: .leading, spacing: AKSpacing.sm) {
+            Text("AUDIO & SUBTITLE TRACKS")
+                .font(typography.badgeSmall)
+                .foregroundColor(palette.textSecondary.opacity(0.7))
+                .padding(.horizontal, AKSpacing.lg)
+
+            VStack(spacing: AKSpacing.xs) {
+                // Audio Track
+                trackRow(
+                    title: "Audio Track",
+                    value: coordinator.selectedAudioTrack?.title ?? "Default",
+                    icon: "speaker.wave.2.fill"
+                ) {
+                    onSelectAction?(.audioTracks)
+                }
+
+                // Subtitles
+                trackRow(
+                    title: "Subtitles",
+                    value: coordinator.selectedSubtitleTrack?.title ?? "Off",
+                    icon: "captions.bubble.fill"
+                ) {
+                    onSelectAction?(.subtitleTracks)
+                }
+
+                // Closed Captions (CC / SDH)
+                trackRow(
+                    title: "Closed Captions (CC)",
+                    value: coordinator.selectedClosedCaptionTrack?.title ?? "Off",
+                    icon: "captions.bubble"
+                ) {
+                    onSelectAction?(.closedCaptionTracks)
+                }
+
+                // Audio Description (AD)
+                trackRow(
+                    title: "Audio Description (AD)",
+                    value: coordinator.selectedAudioDescriptionTrack?.title ?? "Off",
+                    icon: "person.wave.2.fill"
+                ) {
+                    onSelectAction?(.audioDescriptionTracks)
+                }
+
+                // Alternative Angles / Multi-Camera (Video Alternative Tracks)
+                if !coordinator.isAudioOnly {
+                    let angleLabel = coordinator.availableVideoAlternativeTracks.isEmpty
+                        ? "None"
+                        : (coordinator.selectedVideoAlternativeTrack?.title ?? "Main")
+                    trackRow(
+                        title: "Alternative Angles",
+                        value: angleLabel,
+                        icon: "video.badge.plus"
+                    ) {
+                        onSelectAction?(.videoAlternativeTracks)
+                    }
+                }
+            }
+            .padding(.horizontal, AKSpacing.md)
+        }
+    }
+
+    private func trackRow(
+        title: String,
+        value: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: AKSpacing.md) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(palette.textPrimary)
+                }
+
+                Text(title)
+                    .font(typography.body.weight(.medium))
+                    .foregroundColor(palette.textPrimary)
+
+                Spacer()
+
+                Text(value)
+                    .font(typography.footnote)
+                    .foregroundColor(palette.textSecondary)
+                    .lineLimit(1)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(palette.textSecondary.opacity(0.6))
+            }
+            .padding(.horizontal, AKSpacing.md)
+            .padding(.vertical, AKSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.white.opacity(0.05))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Loop & Shuffle Section
 
     private var loopSection: some View {
         VStack(alignment: .leading, spacing: AKSpacing.sm) {
@@ -220,6 +321,8 @@ public struct AKMoreOptionsSheet: View {
         }
         .buttonStyle(.plain)
     }
+
+    // MARK: - Aspect Ratio Section
 
     private var aspectRatioSection: some View {
         VStack(alignment: .leading, spacing: AKSpacing.sm) {

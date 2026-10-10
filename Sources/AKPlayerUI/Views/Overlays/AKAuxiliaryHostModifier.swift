@@ -115,6 +115,12 @@ public struct AKAuxiliaryHostModifier: ViewModifier {
             AKTrackSelectorSheet(trackType: .audio, coordinator: coordinator)
         case .subtitleTracks, .trackSelection:
             AKTrackSelectorSheet(trackType: .subtitle, coordinator: coordinator)
+        case .closedCaptionTracks:
+            AKTrackSelectorSheet(trackType: .closedCaption, coordinator: coordinator)
+        case .audioDescriptionTracks:
+            AKTrackSelectorSheet(trackType: .audioDescription, coordinator: coordinator)
+        case .videoAlternativeTracks:
+            AKTrackSelectorSheet(trackType: .videoAlternative, coordinator: coordinator)
         case .details:
             AKMediaDetailsView(coordinator: coordinator)
         }
@@ -127,7 +133,7 @@ public struct AKAuxiliaryHostModifier: ViewModifier {
             return [.height(310)]
         case .moreOptions:
             return [.medium, .large]
-        case .audioTracks, .subtitleTracks, .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
+        case .audioTracks, .subtitleTracks, .closedCaptionTracks, .audioDescriptionTracks, .videoAlternativeTracks, .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
             return [.fraction(0.68), .large]
         }
     }

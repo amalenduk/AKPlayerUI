@@ -612,8 +612,8 @@ public struct AKAudioPlayerView: View {
         case .playbackSpeed:
             return [.height(310)]
         case .moreOptions:
-            return [.height(410), .medium]
-        case .audioTracks, .subtitleTracks, .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
+            return [.height(410), .medium, .large]
+        case .audioTracks, .subtitleTracks, .closedCaptionTracks, .audioDescriptionTracks, .videoAlternativeTracks, .trackSelection, .equalizer, .chapters, .queue, .lyrics, .details:
             return [.fraction(0.68), .large]
         }
     }
@@ -651,7 +651,25 @@ public struct AKAudioPlayerView: View {
             AKTrackSelectorSheet(
                 trackType: .subtitle,
                 coordinator: coordinator,
-                placementMode: placement,
+                placementMode: placement
+            )
+        case .closedCaptionTracks:
+            AKTrackSelectorSheet(
+                trackType: .closedCaption,
+                coordinator: coordinator,
+                placementMode: placement
+            )
+        case .audioDescriptionTracks:
+            AKTrackSelectorSheet(
+                trackType: .audioDescription,
+                coordinator: coordinator,
+                placementMode: placement
+            )
+        case .videoAlternativeTracks:
+            AKTrackSelectorSheet(
+                trackType: .videoAlternative,
+                coordinator: coordinator,
+                placementMode: placement
             )
         case .details:
             AKMediaDetailsView(
