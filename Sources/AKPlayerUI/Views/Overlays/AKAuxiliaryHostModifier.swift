@@ -36,13 +36,12 @@ public struct AKAuxiliaryHostModifier: ViewModifier {
                         }
                 }
             )
-            // 1. Side Drawer Mode: Slide-in Floating Frosted Glass Panel
+            // 1. Side Drawer Mode (Landscape)
             .overlay {
                 if uiState.isDrawerActive, let activeOverlay = uiState.activeInlineOverlay {
                     GeometryReader { geo in
                         let isLandscape = geo.size.width > geo.size.height
                         ZStack(alignment: .trailing) {
-                            // Dimmed Backdrop
                             Color.black.opacity(0.4)
                                 .ignoresSafeArea()
                                 .onTapGesture {
@@ -50,11 +49,11 @@ public struct AKAuxiliaryHostModifier: ViewModifier {
                                 }
                                 .transition(.opacity)
 
-                            // Trailing Drawer Panel (Ignores safe area ONLY in landscape)
                             HStack(spacing: 0) {
                                 Spacer()
 
                                 sheetView(for: activeOverlay, placement: .sideDrawer)
+                                    .environment(\.akPlayerTheme, theme)
                                     .frame(width: min(geo.size.width * 0.88, isLandscape ? 400 : 380))
                                     .frame(maxHeight: .infinity)
                             }
@@ -65,101 +64,59 @@ public struct AKAuxiliaryHostModifier: ViewModifier {
                 }
             }
             .animation(.spring(response: 0.38, dampingFraction: 0.82), value: uiState.activeInlineOverlay)
-            // 2. Native Sheet Presentation
+            // 2. Native Sheet Presentation (Portrait)
             .sheet(item: $uiState.activeSheet) { sheet in
                 sheetView(for: sheet, placement: .sheet)
+                    .environment(\.akPlayerTheme, theme)
                     .presentationDetents(presentationDetents(for: sheet))
                     .presentationDragIndicator(.visible)
                     .presentationBackground(Color(red: 0.11, green: 0.11, blue: 0.15).opacity(0.96))
             }
     }
 
-    // MARK: - Auxiliary Sheet Builder
+    // MARK: - Standardized Auxiliary Container
     @ViewBuilder
-    private func sheetView(for sheet: AKPlayerAuxiliarySheet, placement: AKOverlayPlacementMode = .sheet) -> some View {
+    private func sheetView(
+        for sheet: AKPlayerAuxiliarySheet,
+        placement: AKOverlayPlacementMode = .sheet
+    ) -> some View {
+        AKAuxiliaryContainerView(
+            title: sheet.title,
+            placementMode: placement,
+            onDismiss: { uiState.dismissAuxiliary() },
+            content: {
+                sheetContent(for: sheet, placement: placement)
+            }
+        )
+    }
+
+    @ViewBuilder
+    private func sheetContent(for sheet: AKPlayerAuxiliarySheet, placement: AKOverlayPlacementMode) -> some View {
         switch sheet {
         case .playbackSpeed:
-            AKPlaybackSpeedSheet(
-                coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKPlaybackSpeedSheet(coordinator: coordinator)
         case .moreOptions:
             AKMoreOptionsSheet(
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
                 onSelectAction: { targetSheet in
-                    uiState.presentSheet(targetSheet, isAudioOnly: coordinator.isAudioOnly)
+                    uiState.presentSheet(targetSheet)
                 },
-                onLockScreen: {
-                    onLockScreen?()
-                },
-                onDismiss: { uiState.dismissAuxiliary() }
+                onLockScreen: onLockScreen
             )
         case .equalizer:
-            AKEqualizerView(
-                equalizer: coordinator.equalizer,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                title: "10-Band Graphic Equalizer",
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKEqualizerView(equalizer: coordinator.equalizer)
         case .chapters:
-            AKChapterSheet(
-                coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKChapterSheet(coordinator: coordinator)
         case .lyrics:
-            AKLyricsView(
-                coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKLyricsView(coordinator: coordinator)
         case .queue:
-            AKQueueSheet(
-                coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKQueueSheet(coordinator: coordinator)
         case .audioTracks:
-            AKTrackSelectorSheet(
-                trackType: .audio,
-                coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKTrackSelectorSheet(trackType: .audio, coordinator: coordinator)
         case .subtitleTracks, .trackSelection:
-            AKTrackSelectorSheet(
-                trackType: .subtitle,
-                coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKTrackSelectorSheet(trackType: .subtitle, coordinator: coordinator)
         case .details:
-            AKEqualizerView(
-                equalizer: coordinator.equalizer,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                title: "Media Details",
-                onDismiss: { uiState.dismissAuxiliary() }
-            )
+            AKEqualizerView(equalizer: coordinator.equalizer)
         }
     }
 

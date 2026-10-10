@@ -22,17 +22,31 @@ public enum AKPlayerAuxiliarySheet: String, Identifiable, Sendable {
 
     public var title: String {
         switch self {
-        case .queue:          return "Up Next"
+        case .queue:          return "Queue"
         case .lyrics:         return "Lyrics"
-        case .equalizer:      return "10-Band Equalizer"
+        case .equalizer:      return "10-Band Graphic Equalizer"
         case .chapters:       return "Chapters"
         case .audioTracks:    return "Audio Tracks"
         case .subtitleTracks: return "Subtitles"
         case .trackSelection: return "Audio & Subtitles"
-        case .details:        return "Media Information"
+        case .details:        return "Media Details"
         case .playbackSpeed:  return "Playback Speed"
         case .moreOptions:    return "More Options"
         }
+    }
+
+    public var badge: String {
+        title
+    }
+
+    @MainActor
+    public func badge(coordinator: AKPlayerCoordinator) -> String {
+        title
+    }
+
+    @MainActor
+    public func displayTitle(coordinator: AKPlayerCoordinator) -> String {
+        title
     }
 
     public var systemIconName: String {

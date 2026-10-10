@@ -11,68 +11,41 @@ import AKPlayer
 /// Standardized inside AKAuxiliaryContainerView to eliminate duplicate headers, duplicate drag handles, and duplicate close buttons.
 public struct AKEqualizerView: View {
     @ObservedObject public var equalizer: AKEqualizerManager
-    public var palette: AKColorPalette
-    public var typography: AKTypography
     public var placementMode: AKOverlayPlacementMode
-    public var title: String
-    public var onDismiss: (() -> Void)?
+
+    @Environment(\.akPlayerTheme) private var theme
 
     public init(
         equalizer: AKEqualizerManager,
-        palette: AKColorPalette = .standard,
-        typography: AKTypography = .standard,
-        placementMode: AKOverlayPlacementMode = .sheet,
-        title: String = "10-Band Graphic Equalizer",
-        onDismiss: (() -> Void)? = nil
+        placementMode: AKOverlayPlacementMode = .sheet
     ) {
         self.equalizer = equalizer
-        self.palette = palette
-        self.typography = typography
         self.placementMode = placementMode
-        self.title = title
-        self.onDismiss = onDismiss
     }
 
     public var body: some View {
-        AKAuxiliaryContainerView(
-            badge: "DSP Equalizer",
-            title: title,
-            placementMode: placementMode,
-            palette: palette,
-            typography: typography,
-            onDismiss: onDismiss,
-            headerTrailing: {
-                Toggle("", isOn: $equalizer.isEnabled)
-                    .labelsHidden()
-                    .tint(palette.accent)
-            },
-            content: {
-                GeometryReader { contentGeo in
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack(spacing: AKSpacing.md) {
-                            if placementMode == .inline {
-                                inlineControlBar
-                            }
+        GeometryReader { contentGeo in
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: AKSpacing.md) {
+                    inlineControlBar
 
-                            // Dynamic Cubic Spline Frequency Response Curve
-                            frequencyResponseCurve
+                    // Dynamic Cubic Spline Frequency Response Curve
+                    frequencyResponseCurve
 
-                            // Quick Preset Selection Pills
-                            presetPillsRow
+                    // Quick Preset Selection Pills
+                    presetPillsRow
 
-                            // 10-Band Logarithmic Sliders (Flexibly grows when sheet expands to full height)
-                            fadersRow
-                                .frame(minHeight: 145, maxHeight: .infinity)
+                    // 10-Band Logarithmic Sliders (Flexibly grows when sheet expands to full height)
+                    fadersRow
+                        .frame(minHeight: 145, maxHeight: .infinity)
 
-                            // Preamp Gain Slider
-                            preampSlider
-                        }
-                        .frame(minWidth: contentGeo.size.width, minHeight: contentGeo.size.height)
-                        .padding(.top, AKSpacing.xs)
-                    }
+                    // Preamp Gain Slider
+                    preampSlider
                 }
+                .frame(minWidth: contentGeo.size.width, minHeight: contentGeo.size.height)
+                .padding(.top, AKSpacing.xs)
             }
-        )
+        }
     }
 
     // MARK: - Subviews
@@ -81,23 +54,19 @@ public struct AKEqualizerView: View {
         HStack(alignment: .center, spacing: AKSpacing.sm) {
             HStack(spacing: AKSpacing.xs) {
                 Circle()
-                    .fill(equalizer.isEnabled ? palette.accent : Color.gray.opacity(0.5))
+                    .fill(equalizer.isEnabled ? theme.palette.accent : Color.gray.opacity(0.5))
                     .frame(width: 8, height: 8)
 
-                Text(title)
-                    .font(typography.subheadline.weight(.semibold))
-                    .foregroundColor(palette.foregroundPrimary)
-
                 Text(equalizer.isEnabled ? "Active" : "Bypassed")
-                    .font(typography.caption2)
-                    .foregroundColor(palette.foregroundSecondary)
+                    .font(theme.typography.caption2)
+                    .foregroundColor(theme.palette.foregroundSecondary)
             }
 
             Spacer()
 
             Toggle("", isOn: $equalizer.isEnabled)
                 .labelsHidden()
-                .tint(palette.accent)
+                .tint(theme.palette.accent)
         }
         .padding(.horizontal, AKSpacing.md)
         .padding(.vertical, AKSpacing.xxs)
@@ -123,7 +92,7 @@ public struct AKEqualizerView: View {
                 // Spline Curve
                 splinePath(in: geo.size)
                     .stroke(
-                        equalizer.isEnabled ? palette.accent : Color.gray.opacity(0.4),
+                        equalizer.isEnabled ? theme.palette.accent : Color.gray.opacity(0.4),
                         style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
                     )
             }
@@ -142,7 +111,7 @@ public struct AKEqualizerView: View {
                         }
                     }) {
                         Text(preset.rawValue)
-                            .font(typography.caption1.weight(.semibold))
+                            .font(theme.typography.caption1.weight(.semibold))
                             .foregroundColor(equalizer.activePreset == preset ? .black : .white)
                             .padding(.horizontal, AKSpacing.md)
                             .padding(.vertical, AKSpacing.xs)
@@ -165,7 +134,7 @@ public struct AKEqualizerView: View {
                 VStack(spacing: AKSpacing.xxs) {
                     Text(String(format: "%+.1f", equalizer.bands[index].gain))
                         .font(.system(size: 8, weight: .bold, design: .monospaced))
-                        .foregroundColor(equalizer.bands[index].gain == 0 ? .white.opacity(0.4) : palette.accent)
+                        .foregroundColor(equalizer.bands[index].gain == 0 ? .white.opacity(0.4) : theme.palette.accent)
 
                     // Vertical Fader with Adaptive Travel Track
                     GeometryReader { faderGeo in
@@ -191,7 +160,7 @@ public struct AKEqualizerView: View {
 
                             // Fader Thumb
                             Circle()
-                                .fill(equalizer.isEnabled ? palette.accent : Color.gray)
+                                .fill(equalizer.isEnabled ? theme.palette.accent : Color.gray)
                                 .frame(width: thumbSize, height: thumbSize)
                                 .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
                                 .position(x: faderGeo.size.width * 0.5, y: thumbY)
@@ -225,14 +194,14 @@ public struct AKEqualizerView: View {
     private var preampSlider: some View {
         HStack(spacing: AKSpacing.sm) {
             Text("Preamp")
-                .font(typography.footnote.weight(.semibold))
+                .font(theme.typography.footnote.weight(.semibold))
                 .foregroundColor(.white.opacity(0.8))
 
             Slider(value: $equalizer.preampGain, in: -6.0...6.0, step: 0.5)
-                .tint(palette.accent)
+                .tint(theme.palette.accent)
 
             Text(String(format: "%+.1f dB", equalizer.preampGain))
-                .font(typography.timecodeSmall)
+                .font(theme.typography.timecodeSmall)
                 .foregroundColor(.white)
                 .frame(width: 58, alignment: .trailing)
         }

@@ -17,6 +17,20 @@ struct AKPlayerUITests {
         #expect(config.landscapeOverlayPlacement == .sideDrawer)
     }
 
+    @Test @MainActor func testAuxiliaryPresentationAndDismiss() async throws {
+        let uiState = AKPlayerUIState()
+        uiState.presentSheet(.moreOptions)
+        #expect(uiState.activeSheet == .moreOptions)
+
+        // Switch to another sheet directly
+        uiState.presentSheet(.playbackSpeed)
+        #expect(uiState.activeSheet == .playbackSpeed)
+
+        // Dismiss
+        uiState.dismissAuxiliary()
+        #expect(uiState.activeSheet == nil)
+    }
+
     @Test @MainActor func testLandscapePlacementRouting() async throws {
         let uiState = AKPlayerUIState(placement: .sheet, landscapePlacement: .sideDrawer)
         #expect(uiState.effectivePlacement() == .sheet)

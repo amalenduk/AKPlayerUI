@@ -11,12 +11,22 @@ import AKPlayer
 /// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKMoreOptionsSheet: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
-    public var palette: AKColorPalette
-    public var typography: AKTypography
+    public var customPalette: AKColorPalette?
+    public var customTypography: AKTypography?
     public var placementMode: AKOverlayPlacementMode
     public var onSelectAction: ((AKPlayerAuxiliarySheet) -> Void)?
     public var onLockScreen: (() -> Void)?
     public var onDismiss: (() -> Void)?
+
+    @Environment(\.akPlayerTheme) private var theme
+
+    public var palette: AKColorPalette {
+        customPalette ?? theme.palette
+    }
+
+    public var typography: AKTypography {
+        customTypography ?? theme.typography
+    }
 
     private let columns = [
         GridItem(.flexible()),
@@ -27,16 +37,16 @@ public struct AKMoreOptionsSheet: View {
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
-        palette: AKColorPalette = .standard,
-        typography: AKTypography = .standard,
+        palette: AKColorPalette? = nil,
+        typography: AKTypography? = nil,
         placementMode: AKOverlayPlacementMode = .sheet,
         onSelectAction: ((AKPlayerAuxiliarySheet) -> Void)? = nil,
         onLockScreen: (() -> Void)? = nil,
         onDismiss: (() -> Void)? = nil
     ) {
         self.coordinator = coordinator
-        self.palette = palette
-        self.typography = typography
+        self.customPalette = palette
+        self.customTypography = typography
         self.placementMode = placementMode
         self.onSelectAction = onSelectAction
         self.onLockScreen = onLockScreen
@@ -44,32 +54,22 @@ public struct AKMoreOptionsSheet: View {
     }
 
     public var body: some View {
-        AKAuxiliaryContainerView(
-            badge: "Player Controls",
-            title: "More Options",
-            placementMode: placementMode,
-            palette: palette,
-            typography: typography,
-            onDismiss: onDismiss,
-            content: {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: AKSpacing.xl) {
-                        // Quick Action Buttons Grid (4 columns)
-                        actionGrid
-                            .padding(.horizontal, AKSpacing.md)
-                            .padding(.top, AKSpacing.md)
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: AKSpacing.xl) {
+                // Quick Action Buttons Grid (4 columns)
+                actionGrid
+                    .padding(.horizontal, AKSpacing.md)
+                    .padding(.top, AKSpacing.md)
 
-                        // Loop & Shuffle Section
-                        loopSection
+                // Loop & Shuffle Section
+                loopSection
 
-                        // Aspect Ratio Section
-                        aspectRatioSection
+                // Aspect Ratio Section
+                aspectRatioSection
 
-                        Spacer(minLength: AKSpacing.xl)
-                    }
-                }
+                Spacer(minLength: AKSpacing.xl)
             }
-        )
+        }
     }
 
     // MARK: - Subviews

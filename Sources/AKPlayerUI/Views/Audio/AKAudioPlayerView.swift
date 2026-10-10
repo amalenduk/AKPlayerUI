@@ -15,9 +15,9 @@ public struct AKAudioPlayerView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
     @ObservedObject public var uiState: AKPlayerUIState
     public var theme: AKPlayerTheme
-
+    
     @State private var isFavorite: Bool = false
-
+    
     public init(
         coordinator: AKPlayerCoordinator = .shared,
         uiState: AKPlayerUIState? = nil,
@@ -27,20 +27,20 @@ public struct AKAudioPlayerView: View {
         self.uiState = uiState ?? coordinator.uiState
         self.theme = theme
     }
-
+    
     private var isInlineActive: Bool {
         uiState.isInlineActive(isAudioOnly: true)
     }
-
+    
     private var isDrawerActive: Bool {
         uiState.isDrawerActive
     }
-
+    
     public var body: some View {
         ZStack {
             // 1. Ambient Blurred Artwork Background
             backgroundSurface
-
+            
             // 2. Main Player Surface
             VStack(spacing: AKSpacing.zero) {
                 if isInlineActive, let activeOverlay = uiState.activeInlineOverlay {
@@ -50,7 +50,7 @@ public struct AKAudioPlayerView: View {
                         .padding(.top, AKSpacing.md)
                         .padding(.bottom, AKSpacing.xs)
                         .transition(.move(edge: .top).combined(with: .opacity))
-
+                    
                     // Lower Auxiliary Content Canvas
                     auxiliaryOverlayView(for: activeOverlay, placement: .inline)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -60,34 +60,34 @@ public struct AKAudioPlayerView: View {
                     topBar
                         .padding(.horizontal, AKSpacing.xl)
                         .padding(.top, AKSpacing.md)
-
+                    
                     Spacer(minLength: AKSpacing.xs)
-
+                    
                     heroArtwork
                         .padding(.horizontal, AKSpacing.xl)
                         .layoutPriority(1)
-
+                    
                     Spacer(minLength: AKSpacing.sm)
-
+                    
                     metadataRow
                         .padding(.horizontal, AKSpacing.xl)
-
+                    
                     progressRailSection
                         .padding(.horizontal, AKSpacing.xl)
                         .padding(.top, AKSpacing.md)
-
+                    
                     transportControls
                         .padding(.horizontal, AKSpacing.xl)
                         .padding(.top, AKSpacing.xs)
                 }
-
+                
                 // Bottom Auxiliary Selector Toolbar (always accessible)
                 bottomAuxiliaryToolbar
                     .padding(.horizontal, AKSpacing.xl)
                     .padding(.top, AKSpacing.sm)
                     .padding(.bottom, AKSpacing.lg)
             }
-
+            
             // 3. SIDE DRAWER MODE: Slide-in Floating Frosted Glass Panel
             if isDrawerActive, let activeOverlay = uiState.activeInlineOverlay {
                 GeometryReader { geo in
@@ -100,11 +100,11 @@ public struct AKAudioPlayerView: View {
                                 coordinator.dismissAuxiliary()
                             }
                             .transition(.opacity)
-
+                        
                         // Trailing Drawer Panel (Ignores safe area ONLY in landscape)
                         HStack(spacing: 0) {
                             Spacer()
-
+                            
                             auxiliaryOverlayView(for: activeOverlay, placement: .sideDrawer)
                                 .frame(width: min(geo.size.width * 0.88, isLandscape ? 400 : 380))
                                 .frame(maxHeight: .infinity)
@@ -134,20 +134,20 @@ public struct AKAudioPlayerView: View {
         }
         .environment(\.akPlayerTheme, theme)
     }
-
+    
     // MARK: - Subviews: Background & Navigation
-
+    
     private var backgroundSurface: some View {
         GeometryReader { proxy in
             ZStack {
                 theme.palette.background.ignoresSafeArea()
-
+                
                 // Ambient tinted glow
                 theme.palette.accent
                     .opacity(0.24)
                     .blur(radius: theme.materials.ambientBlurRadius * 1.5)
                     .scaleEffect(1.2)
-
+                
                 // Dynamic Abstract Gradient
                 LinearGradient(
                     colors: [
@@ -159,7 +159,7 @@ public struct AKAudioPlayerView: View {
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
-
+                
                 if let mat = theme.materials.materialStyle.material {
                     Rectangle()
                         .fill(mat)
@@ -169,7 +169,7 @@ public struct AKAudioPlayerView: View {
             }
         }
     }
-
+    
     private var topBar: some View {
         HStack {
             // Collapse Chevron Button
@@ -182,24 +182,24 @@ public struct AKAudioPlayerView: View {
                     .clipShape(Circle())
             }
             .buttonStyle(.plain)
-
+            
             Spacer()
-
+            
             // Header Pill
             VStack(spacing: AKSpacing.xxxs) {
                 Text("PLAYING FROM LIBRARY")
                     .font(theme.typography.badgeSmall)
                     .foregroundColor(theme.palette.foregroundTertiary)
                     .tracking(1.2)
-
+                
                 Text(coordinator.currentTitle.isEmpty ? "Media Title" : coordinator.currentTitle)
                     .font(theme.typography.caption1.weight(.semibold))
                     .foregroundColor(theme.palette.foregroundSecondary)
                     .lineLimit(1)
             }
-
+            
             Spacer()
-
+            
             // Menu
             Menu {
                 Section("Overlay Placement Mode") {
@@ -214,7 +214,7 @@ public struct AKAudioPlayerView: View {
                         }
                     }
                 }
-
+                
                 Section("Tools") {
                     Button(action: { uiState.presentSheet(.equalizer) }) {
                         Label("Equalizer & DSP", systemImage: "slider.vertical.3")
@@ -239,9 +239,9 @@ public struct AKAudioPlayerView: View {
             }
         }
     }
-
+    
     // MARK: - Subviews: Inline Sticky Top Playback Bar
-
+    
     private var inlineTopPlaybackBar: some View {
         VStack(spacing: AKSpacing.xxs) {
             HStack(spacing: AKSpacing.sm) {
@@ -264,21 +264,21 @@ public struct AKAudioPlayerView: View {
                     }
                 }
                 .frame(width: 42, height: 42)
-
+                
                 // Title & Subtitle Info
                 VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                     Text(coordinator.currentTitle)
                         .font(theme.typography.footnote.weight(.bold))
                         .foregroundColor(.white)
                         .lineLimit(1)
-
+                    
                     Text(coordinator.currentSubtitle.isEmpty ? "Audio" : coordinator.currentSubtitle)
                         .font(theme.typography.caption2)
                         .foregroundColor(.white.opacity(0.65))
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-
+                
                 // Compact Transport
                 HStack(spacing: AKSpacing.xs) {
                     Button(action: { coordinator.skipBackward() }) {
@@ -288,13 +288,13 @@ public struct AKAudioPlayerView: View {
                             .frame(width: 32, height: 32)
                     }
                     .buttonStyle(.plain)
-
+                    
                     Button(action: { coordinator.togglePlayPause() }) {
                         ZStack {
                             Circle()
                                 .fill(theme.palette.accent)
                                 .frame(width: 36, height: 36)
-
+                            
                             Image(systemName: coordinator.isPlaying ? "pause.fill" : "play.fill")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.white)
@@ -302,7 +302,7 @@ public struct AKAudioPlayerView: View {
                         }
                     }
                     .buttonStyle(.plain)
-
+                    
                     Button(action: { coordinator.skipForward() }) {
                         Image(systemName: "goforward.15")
                             .font(.system(size: 14, weight: .semibold))
@@ -310,7 +310,7 @@ public struct AKAudioPlayerView: View {
                             .frame(width: 32, height: 32)
                     }
                     .buttonStyle(.plain)
-
+                    
                     // Return to Hero Artwork (Collapse Inline)
                     Button(action: { uiState.dismissAuxiliary() }) {
                         Image(systemName: "arrow.down.right.and.arrow.up.left")
@@ -323,7 +323,7 @@ public struct AKAudioPlayerView: View {
                     .buttonStyle(.plain)
                 }
             }
-
+            
             // Compact Hairline Scrubber
             GeometryReader { geo in
                 let progress = coordinator.duration > 0 ? max(0, min(1.0, coordinator.currentTime / coordinator.duration)) : 0
@@ -331,7 +331,7 @@ public struct AKAudioPlayerView: View {
                     Capsule()
                         .fill(Color.white.opacity(0.15))
                         .frame(height: 3)
-
+                    
                     Capsule()
                         .fill(theme.palette.accent)
                         .frame(width: geo.size.width * CGFloat(progress), height: 3)
@@ -366,9 +366,9 @@ public struct AKAudioPlayerView: View {
             y: theme.materials.shadowY
         )
     }
-
+    
     // MARK: - Subviews: Hero Artwork & Standard Controls
-
+    
     private var heroArtwork: some View {
         GeometryReader { geo in
             let side = min(geo.size.width, geo.size.height, 320)
@@ -379,7 +379,7 @@ public struct AKAudioPlayerView: View {
                     .frame(width: side, height: side)
                     .blur(radius: coordinator.isPlaying ? 24 : 12)
                     .offset(y: 10)
-
+                
                 // Artwork Card
                 ZStack {
                     if let artworkImage = coordinator.currentArtworkImage {
@@ -413,7 +413,7 @@ public struct AKAudioPlayerView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
-
+    
     private func defaultArtworkPlaceholder(side: CGFloat) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -427,12 +427,12 @@ public struct AKAudioPlayerView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-
+            
             VStack(spacing: AKSpacing.md) {
                 Image(systemName: "music.note")
                     .font(.system(size: side * 0.26, weight: .light))
                     .foregroundColor(.white.opacity(0.85))
-
+                
                 if let chapter = coordinator.activeChapter {
                     Text(chapter.title)
                         .font(theme.typography.footnote.weight(.medium))
@@ -446,7 +446,7 @@ public struct AKAudioPlayerView: View {
         }
         .frame(width: side, height: side)
     }
-
+    
     private var metadataRow: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: AKSpacing.xxs) {
@@ -454,15 +454,15 @@ public struct AKAudioPlayerView: View {
                     .font(theme.typography.title2.weight(.bold))
                     .foregroundColor(theme.palette.foregroundPrimary)
                     .lineLimit(1)
-
+                
                 Text(coordinator.currentSubtitle.isEmpty ? "Unknown Artist" : coordinator.currentSubtitle)
                     .font(theme.typography.subheadline)
                     .foregroundColor(theme.palette.foregroundSecondary)
                     .lineLimit(1)
             }
-
+            
             Spacer()
-
+            
             // Heart / Favorite Button
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
@@ -477,7 +477,7 @@ public struct AKAudioPlayerView: View {
             .buttonStyle(.plain)
         }
     }
-
+    
     private var progressRailSection: some View {
         VStack(spacing: AKSpacing.xs) {
             AKTimelineSlider(
@@ -493,7 +493,7 @@ public struct AKAudioPlayerView: View {
             )
         }
     }
-
+    
     private var transportControls: some View {
         HStack(spacing: AKSpacing.zero) {
             // Shuffle Button
@@ -504,34 +504,34 @@ public struct AKAudioPlayerView: View {
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
-
+            
             Spacer()
-
+            
             // Skip Backward
             AKSeekButton(
                 direction: .backward,
                 stepSeconds: coordinator.configuration.playback.skipBackwardDuration,
                 onAction: { coordinator.skipBackward() }
             )
-
+            
             Spacer()
-
+            
             // Play / Pause Central Button (Autonomous AKPlayer binding)
             AKPlayPauseButton(state: coordinator.state, autoPlay: coordinator.autoPlay) {
                 coordinator.player.togglePlayPause()
             }
-
+            
             Spacer()
-
+            
             // Skip Forward
             AKSeekButton(
                 direction: .forward,
                 stepSeconds: coordinator.configuration.playback.skipForwardDuration,
                 onAction: { coordinator.skipForward() }
             )
-
+            
             Spacer()
-
+            
             // Repeat Mode Button
             Button(action: { coordinator.toggleRepeatMode() }) {
                 Image(systemName: coordinator.repeatMode == .one ? "repeat.1" : "repeat")
@@ -542,7 +542,7 @@ public struct AKAudioPlayerView: View {
             .buttonStyle(.plain)
         }
     }
-
+    
     private var bottomAuxiliaryToolbar: some View {
         HStack(spacing: AKSpacing.sm) {
             // Placement Mode Selector Pill
@@ -563,26 +563,26 @@ public struct AKAudioPlayerView: View {
                 .padding(.vertical, AKSpacing.xs)
                 .akGlassPill()
             }
-
+            
             Spacer()
-
+            
             // Lyrics Button
             auxiliaryButton(sheet: .lyrics, icon: "quote.bubble", label: "Lyrics")
-
+            
             // Equalizer Button
             auxiliaryButton(sheet: .equalizer, icon: "slider.vertical.3", label: "EQ")
-
+            
             // Chapters Button
             auxiliaryButton(sheet: .chapters, icon: theme.icons.chapters, label: "Chapters")
-
+            
             // Queue Button
             auxiliaryButton(sheet: .queue, icon: "music.note.list", label: "Queue")
         }
     }
-
+    
     private func auxiliaryButton(sheet: AKPlayerAuxiliarySheet, icon: String, label: String) -> some View {
         let isSelected = uiState.activeInlineOverlay == sheet || uiState.activeSheet == sheet
-
+        
         return Button(action: {
             uiState.toggle(sheet, isAudioOnly: true)
         }) {
@@ -604,9 +604,9 @@ public struct AKAudioPlayerView: View {
         }
         .buttonStyle(.plain)
     }
-
+    
     // MARK: - Unified Auxiliary Overlay Factory
-
+    
     private func presentationDetents(for sheet: AKPlayerAuxiliarySheet) -> Set<PresentationDetent> {
         switch sheet {
         case .playbackSpeed:
@@ -617,88 +617,59 @@ public struct AKAudioPlayerView: View {
             return [.fraction(0.68), .large]
         }
     }
-
+    
     @ViewBuilder
     private func auxiliaryOverlayView(for sheet: AKPlayerAuxiliarySheet, placement: AKOverlayPlacementMode) -> some View {
         switch sheet {
         case .lyrics:
             AKLyricsView(
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
+                placementMode: placement
             )
         case .chapters:
             AKChapterSheet(
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
+                placementMode: placement
             )
         case .queue:
             AKQueueSheet(
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
+                placementMode: placement
             )
         case .equalizer:
             AKEqualizerView(
                 equalizer: coordinator.equalizer,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                title: "10-Band Graphic Equalizer",
-                onDismiss: { uiState.dismissAuxiliary() }
+                placementMode: placement
             )
         case .audioTracks:
             AKTrackSelectorSheet(
                 trackType: .audio,
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
+                placementMode: placement
             )
         case .subtitleTracks, .trackSelection:
             AKTrackSelectorSheet(
                 trackType: .subtitle,
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
                 placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .details:
             AKEqualizerView(
                 equalizer: coordinator.equalizer,
-                palette: theme.palette,
-                typography: theme.typography,
                 placementMode: placement,
-                title: "Audio Details",
-                onDismiss: { uiState.dismissAuxiliary() }
             )
         case .playbackSpeed:
             AKPlaybackSpeedSheet(
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
-                placementMode: placement,
-                onDismiss: { uiState.dismissAuxiliary() }
+                placementMode: placement
             )
         case .moreOptions:
             AKMoreOptionsSheet(
                 coordinator: coordinator,
-                palette: theme.palette,
-                typography: theme.typography,
                 placementMode: placement,
                 onSelectAction: { targetSheet in
                     uiState.presentSheet(targetSheet, isAudioOnly: coordinator.isAudioOnly)
-                },
-                onDismiss: { uiState.dismissAuxiliary() }
+                }
             )
         }
     }

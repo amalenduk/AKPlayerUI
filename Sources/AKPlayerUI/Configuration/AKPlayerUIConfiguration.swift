@@ -46,6 +46,7 @@ public struct AKPlayerUIConfiguration: Sendable, Equatable {
         set { playback.landscapeOverlayPlacement = newValue }
     }
 
+
     /// Automatic adaptive baseline configuration.
     public static let automatic = AKPlayerUIConfiguration()
 

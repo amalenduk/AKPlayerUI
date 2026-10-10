@@ -21,29 +21,21 @@ public struct AKLyricLine: Identifiable, Sendable, Equatable {
 
 /// Time-synchronized karaoke-style lyrics display view.
 /// Features Apple Music-style gradient edge fading, dynamic active line scaling, and tap-to-seek.
-/// Standardized inside AKAuxiliaryContainerView across sheet, drawer, and inline presentation modes.
 public struct AKLyricsView: View {
     @ObservedObject public var coordinator: AKPlayerCoordinator
-    public var palette: AKColorPalette
-    public var typography: AKTypography
-    public var placementMode: AKOverlayPlacementMode
     public var lyrics: [AKLyricLine]
-    public var onDismiss: (() -> Void)?
+
+    @Environment(\.akPlayerTheme) private var theme
 
     public init(
         coordinator: AKPlayerCoordinator = .shared,
-        palette: AKColorPalette = .standard,
-        typography: AKTypography = .standard,
-        placementMode: AKOverlayPlacementMode = .sheet,
         lyrics: [AKLyricLine] = AKLyricsView.sampleLyrics,
+        placementMode: AKOverlayPlacementMode = .sheet,
+        onBack: (() -> Void)? = nil,
         onDismiss: (() -> Void)? = nil
     ) {
         self.coordinator = coordinator
-        self.palette = palette
-        self.typography = typography
-        self.placementMode = placementMode
         self.lyrics = lyrics
-        self.onDismiss = onDismiss
     }
 
     private var activeIndex: Int? {
@@ -51,22 +43,6 @@ public struct AKLyricsView: View {
     }
 
     public var body: some View {
-        AKAuxiliaryContainerView(
-            badge: "Synced Lyrics",
-            title: coordinator.currentTitle.isEmpty ? "Lyrics" : coordinator.currentTitle,
-            placementMode: placementMode,
-            palette: palette,
-            typography: typography,
-            onDismiss: onDismiss,
-            content: {
-                lyricsContent
-            }
-        )
-    }
-
-    // MARK: - Karaoke Lyrics Content
-
-    private var lyricsContent: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: AKSpacing.lg) {
@@ -84,7 +60,7 @@ public struct AKLyricsView: View {
                                 .font(isActive ? .system(size: 24, weight: .bold, design: .rounded) : .system(size: 18, weight: .medium, design: .rounded))
                                 .foregroundColor(isActive ? .white : .white.opacity(0.35))
                                 .scaleEffect(isActive ? 1.03 : 1.0, anchor: .leading)
-                                .shadow(color: isActive ? palette.accent.opacity(0.4) : .clear, radius: 8, x: 0, y: 2)
+                                .shadow(color: isActive ? theme.palette.accent.opacity(0.4) : .clear, radius: 8, x: 0, y: 2)
                                 .animation(.spring(response: 0.32, dampingFraction: 0.78), value: isActive)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }

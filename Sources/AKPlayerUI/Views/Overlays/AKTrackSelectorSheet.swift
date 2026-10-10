@@ -36,25 +36,18 @@ extension AKTrackType {
 public struct AKTrackSelectorSheet: View {
     public let trackType: AKTrackType
     @ObservedObject public var coordinator: AKPlayerCoordinator
-    public var palette: AKColorPalette
-    public var typography: AKTypography
     public var placementMode: AKOverlayPlacementMode
-    public var onDismiss: (() -> Void)?
+
+    @Environment(\.akPlayerTheme) private var theme
 
     public init(
         trackType: AKTrackType = .subtitle,
         coordinator: AKPlayerCoordinator = .shared,
-        palette: AKColorPalette = .standard,
-        typography: AKTypography = .standard,
-        placementMode: AKOverlayPlacementMode = .sheet,
-        onDismiss: (() -> Void)? = nil
+        placementMode: AKOverlayPlacementMode = .sheet
     ) {
         self.trackType = trackType
         self.coordinator = coordinator
-        self.palette = palette
-        self.typography = typography
         self.placementMode = placementMode
-        self.onDismiss = onDismiss
     }
 
     private var availableTracks: [AKMediaTrackOption] {
@@ -96,90 +89,80 @@ public struct AKTrackSelectorSheet: View {
     }
 
     public var body: some View {
-        AKAuxiliaryContainerView(
-            badge: trackType.displayTitle,
-            title: coordinator.currentTitle.isEmpty ? trackType.displayTitle : coordinator.currentTitle,
-            placementMode: placementMode,
-            palette: palette,
-            typography: typography,
-            onDismiss: onDismiss,
-            content: {
-                ScrollView(.vertical, showsIndicators: true) {
-                    LazyVStack(spacing: AKSpacing.xs) {
-                        if availableTracks.isEmpty {
-                            emptyState(
-                                title: "No Extra \(trackType.displayTitle)",
-                                subtitle: "Only the default stream option is available."
-                            )
-                        } else {
-                            // 1. Off Row (Distinct control at top if supported)
-                            if let off = offTrack {
-                                let isOffSelected = selectedTrack == nil || selectedTrack?.isOff == true
-                                offRow(track: off, isSelected: isOffSelected) {
-                                    coordinator.selectTrack(off, for: trackType)
-                                }
+        ScrollView(.vertical, showsIndicators: true) {
+            LazyVStack(spacing: AKSpacing.xs) {
+                if availableTracks.isEmpty {
+                    emptyState(
+                        title: "No Extra \(trackType.displayTitle)",
+                        subtitle: "Only the default stream option is available."
+                    )
+                } else {
+                    // 1. Off Row (Distinct control at top if supported)
+                    if let off = offTrack {
+                        let isOffSelected = selectedTrack == nil || selectedTrack?.isOff == true
+                        offRow(track: off, isSelected: isOffSelected) {
+                            coordinator.selectTrack(off, for: trackType)
+                        }
 
-                                if !contentTracks.isEmpty {
-                                    sectionDivider(title: "AVAILABLE TRACKS")
-                                }
-                            }
-
-                            // 2. Available Content / Language Tracks
-                            ForEach(contentTracks) { track in
-                                let isSelected = track.id == selectedTrack?.id
-                                trackRow(track: track, isSelected: isSelected) {
-                                    coordinator.selectTrack(track, for: trackType)
-                                }
-                            }
+                        if !contentTracks.isEmpty {
+                            sectionDivider(title: "AVAILABLE TRACKS")
                         }
                     }
-                    .padding(.horizontal, AKSpacing.lg)
-                    .padding(.top, AKSpacing.md)
-                    .padding(.bottom, AKSpacing.xxl)
+
+                    // 2. Available Content / Language Tracks
+                    ForEach(contentTracks) { track in
+                        let isSelected = track.id == selectedTrack?.id
+                        trackRow(track: track, isSelected: isSelected) {
+                            coordinator.selectTrack(track, for: trackType)
+                        }
+                    }
                 }
             }
-        )
+            .padding(.horizontal, AKSpacing.lg)
+            .padding(.top, AKSpacing.md)
+            .padding(.bottom, AKSpacing.xxl)
+        }
     }
 
     private func offRow(track: AKMediaTrackOption, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: AKSpacing.sm) {
                 Image(systemName: offIconName)
-                    .font(typography.subheadline.weight(.semibold))
-                    .foregroundColor(isSelected ? palette.accent : palette.foregroundTertiary)
+                    .font(theme.typography.subheadline.weight(.semibold))
+                    .foregroundColor(isSelected ? theme.palette.accent : theme.palette.foregroundTertiary)
                     .frame(width: 28, height: 28)
                     .background(
                         Circle()
-                            .fill(isSelected ? palette.accent.opacity(0.18) : Color.white.opacity(0.05))
+                            .fill(isSelected ? theme.palette.accent.opacity(0.18) : Color.white.opacity(0.05))
                     )
 
                 VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                     Text(track.title)
-                        .font(isSelected ? typography.subheadline.weight(.semibold) : typography.subheadline.weight(.medium))
-                        .foregroundColor(isSelected ? palette.foregroundPrimary : palette.foregroundSecondary)
+                        .font(isSelected ? theme.typography.subheadline.weight(.semibold) : theme.typography.subheadline.weight(.medium))
+                        .foregroundColor(isSelected ? theme.palette.foregroundPrimary : theme.palette.foregroundSecondary)
 
                     Text(offSubtitle)
-                        .font(typography.badgeSmall)
-                        .foregroundColor(palette.foregroundTertiary)
+                        .font(theme.typography.badgeSmall)
+                        .foregroundColor(theme.palette.foregroundTertiary)
                 }
 
                 Spacer()
 
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .font(typography.button)
-                        .foregroundColor(palette.accent)
+                        .font(theme.typography.button)
+                        .foregroundColor(theme.palette.accent)
                 }
             }
             .padding(.horizontal, AKSpacing.md)
             .padding(.vertical, AKSpacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? palette.accent.opacity(0.15) : Color.white.opacity(0.04))
+                    .fill(isSelected ? theme.palette.accent.opacity(0.15) : Color.white.opacity(0.04))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(isSelected ? palette.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
+                    .stroke(isSelected ? theme.palette.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -188,8 +171,8 @@ public struct AKTrackSelectorSheet: View {
     private func sectionDivider(title: String) -> some View {
         HStack(spacing: AKSpacing.sm) {
             Text(title)
-                .font(typography.badgeSmall.weight(.bold))
-                .foregroundColor(palette.foregroundTertiary)
+                .font(theme.typography.badgeSmall.weight(.bold))
+                .foregroundColor(theme.palette.foregroundTertiary)
                 .kerning(1.2)
 
             Rectangle()
@@ -205,13 +188,13 @@ public struct AKTrackSelectorSheet: View {
             HStack(spacing: AKSpacing.sm) {
                 VStack(alignment: .leading, spacing: AKSpacing.xxxs) {
                     Text(track.title)
-                        .font(isSelected ? typography.subheadline.weight(.semibold) : typography.subheadline.weight(.medium))
-                        .foregroundColor(isSelected ? palette.foregroundPrimary : palette.foregroundSecondary)
+                        .font(isSelected ? theme.typography.subheadline.weight(.semibold) : theme.typography.subheadline.weight(.medium))
+                        .foregroundColor(isSelected ? theme.palette.foregroundPrimary : theme.palette.foregroundSecondary)
 
                     if !track.languageCode.isEmpty {
                         Text(track.languageCode.uppercased())
-                            .font(typography.badgeSmall)
-                            .foregroundColor(palette.foregroundTertiary)
+                            .font(theme.typography.badgeSmall)
+                            .foregroundColor(theme.palette.foregroundTertiary)
                     }
                 }
 
@@ -219,19 +202,19 @@ public struct AKTrackSelectorSheet: View {
 
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .font(typography.button)
-                        .foregroundColor(palette.accent)
+                        .font(theme.typography.button)
+                        .foregroundColor(theme.palette.accent)
                 }
             }
             .padding(.horizontal, AKSpacing.md)
             .padding(.vertical, AKSpacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? palette.accent.opacity(0.15) : Color.white.opacity(0.04))
+                    .fill(isSelected ? theme.palette.accent.opacity(0.15) : Color.white.opacity(0.04))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(isSelected ? palette.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
+                    .stroke(isSelected ? theme.palette.accent.opacity(0.4) : Color.white.opacity(0.06), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -242,13 +225,13 @@ public struct AKTrackSelectorSheet: View {
             Spacer(minLength: AKSpacing.xxxl)
             Image(systemName: trackType == .audio ? "waveform.slash" : "captions.bubble")
                 .font(.system(size: 40))
-                .foregroundColor(palette.foregroundTertiary)
+                .foregroundColor(theme.palette.foregroundTertiary)
             Text(title)
-                .font(typography.subheadline.weight(.semibold))
-                .foregroundColor(palette.foregroundSecondary)
+                .font(theme.typography.subheadline.weight(.semibold))
+                .foregroundColor(theme.palette.foregroundSecondary)
             Text(subtitle)
-                .font(typography.caption1)
-                .foregroundColor(palette.foregroundTertiary)
+                .font(theme.typography.caption1)
+                .foregroundColor(theme.palette.foregroundTertiary)
                 .multilineTextAlignment(.center)
             Spacer(minLength: AKSpacing.xxxl)
         }
