@@ -8,7 +8,7 @@ import SwiftUI
 import Combine
 
 /// Standard commercial center frequencies for 10-band audio graphic equalizers.
-public struct AKEqualizerBand: Identifiable, Sendable, Equatable, Hashable {
+public struct AKEqualizerBand: Identifiable, Sendable, Equatable, Hashable, Codable {
     public let id: Int
     public let frequency: Double
     public let frequencyLabel: String
@@ -36,7 +36,7 @@ public struct AKEqualizerBand: Identifiable, Sendable, Equatable, Hashable {
 }
 
 /// Curated DSP Equalizer Presets.
-public enum AKEqualizerPreset: String, CaseIterable, Identifiable, Sendable {
+public enum AKEqualizerPreset: String, CaseIterable, Identifiable, Sendable, Codable {
     case flat = "Flat"
     case bassBoost = "Bass Boost"
     case bassReducer = "Bass Reducer"
@@ -82,17 +82,58 @@ public enum AKEqualizerPreset: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Standalone Audio Equalizer & DSP Manager.
+/// Standalone Audio Equalizer & DSP Manager with automatic persistent storage.
 @MainActor
 public final class AKEqualizerManager: ObservableObject, @unchecked Sendable {
-    @Published public var isEnabled: Bool = false
-    @Published public var activePreset: AKEqualizerPreset = .flat
-    @Published public var bands: [AKEqualizerBand] = AKEqualizerBand.tenBands
-    @Published public var preampGain: Float = 0.0 // -6.0 dB ... +6.0 dB
+    // MARK: - Persistence Keys
+    public enum StorageKeys {
+        public static let isEnabled = "com.akplayer.equalizer.isEnabled"
+        public static let preset = "com.akplayer.equalizer.preset"
+        public static let bandGains = "com.akplayer.equalizer.bandGains"
+        public static let preampGain = "com.akplayer.equalizer.preampGain"
+    }
 
-    public init() {}
+    private let userDefaults: UserDefaults
+    public let isPersistenceEnabled: Bool
+    private var isInitializing: Bool = true
 
-    /// Applies a curated preset across all 10 bands.
+    @Published public var isEnabled: Bool = false {
+        didSet {
+            persistSettings()
+        }
+    }
+
+    @Published public var activePreset: AKEqualizerPreset = .flat {
+        didSet {
+            persistSettings()
+        }
+    }
+
+    @Published public var bands: [AKEqualizerBand] = AKEqualizerBand.tenBands {
+        didSet {
+            persistSettings()
+        }
+    }
+
+    @Published public var preampGain: Float = 0.0 { // -6.0 dB ... +6.0 dB
+        didSet {
+            persistSettings()
+        }
+    }
+
+    // MARK: - Initializer
+
+    public init(userDefaults: UserDefaults = .standard, persist: Bool = true) {
+        self.userDefaults = userDefaults
+        self.isPersistenceEnabled = persist
+
+        loadSettings()
+        self.isInitializing = false
+    }
+
+    // MARK: - Equalizer Operations
+
+    /// Applies a curated preset across all 10 bands and updates storage.
     public func applyPreset(_ preset: AKEqualizerPreset) {
         activePreset = preset
         guard preset != .custom else { return }
@@ -100,20 +141,76 @@ public final class AKEqualizerManager: ObservableObject, @unchecked Sendable {
         for i in 0..<min(bands.count, presetGains.count) {
             bands[i].gain = presetGains[i]
         }
+        persistSettings()
     }
 
-    /// Sets the gain for an individual frequency band and marks the active preset as custom.
+    /// Sets the gain for an individual frequency band, marks preset as custom, and updates storage.
     public func setGain(_ gain: Float, forBandAt index: Int) {
         guard bands.indices.contains(index) else { return }
         bands[index].gain = max(-12.0, min(12.0, gain))
         activePreset = .custom
+        persistSettings()
     }
 
-    /// Resets all equalizer bands and preamp gain to 0.0 dB flat.
+    /// Resets all equalizer bands and preamp gain to 0.0 dB flat and updates storage.
     public func reset() {
         applyPreset(.flat)
         preampGain = 0.0
+        persistSettings()
     }
+
+    /// Restores factory defaults and clears persisted UserDefaults entries.
+    public func clearSavedSettings() {
+        guard isPersistenceEnabled else { return }
+        userDefaults.removeObject(forKey: StorageKeys.isEnabled)
+        userDefaults.removeObject(forKey: StorageKeys.preset)
+        userDefaults.removeObject(forKey: StorageKeys.bandGains)
+        userDefaults.removeObject(forKey: StorageKeys.preampGain)
+        reset()
+        isEnabled = false
+    }
+
+    // MARK: - Storage Lifecycle
+
+    private func persistSettings() {
+        guard isPersistenceEnabled && !isInitializing else { return }
+        userDefaults.set(isEnabled, forKey: StorageKeys.isEnabled)
+        userDefaults.set(activePreset.rawValue, forKey: StorageKeys.preset)
+        userDefaults.set(preampGain, forKey: StorageKeys.preampGain)
+        let gains = bands.map { $0.gain }
+        userDefaults.set(gains, forKey: StorageKeys.bandGains)
+    }
+
+    private func loadSettings() {
+        guard isPersistenceEnabled else { return }
+
+        if userDefaults.object(forKey: StorageKeys.isEnabled) != nil {
+            self.isEnabled = userDefaults.bool(forKey: StorageKeys.isEnabled)
+        }
+
+        if let rawPreset = userDefaults.string(forKey: StorageKeys.preset),
+           let preset = AKEqualizerPreset(rawValue: rawPreset) {
+            self.activePreset = preset
+        }
+
+        if userDefaults.object(forKey: StorageKeys.preampGain) != nil {
+            self.preampGain = userDefaults.float(forKey: StorageKeys.preampGain)
+        }
+
+        if let savedGains = userDefaults.array(forKey: StorageKeys.bandGains) as? [Float],
+           savedGains.count == bands.count {
+            for i in 0..<bands.count {
+                bands[i].gain = savedGains[i]
+            }
+        } else if let savedNumbers = userDefaults.array(forKey: StorageKeys.bandGains) as? [NSNumber],
+                  savedNumbers.count == bands.count {
+            for i in 0..<bands.count {
+                bands[i].gain = savedNumbers[i].floatValue
+            }
+        }
+    }
+
+    // MARK: - Spline Curves
 
     /// Generates normalized coordinate points (0...1) for dynamic cubic spline response curves.
     public func normalizedCurvePoints() -> [CGPoint] {

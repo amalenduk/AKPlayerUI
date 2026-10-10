@@ -187,4 +187,31 @@ struct AKPlayerUITests {
 
         manager.onMuteChanged = nil
     }
+
+    @Test
+    @MainActor
+    func testEqualizerPersistence() throws {
+        let suiteName = "test.equalizer.persistence.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+
+        let eq1 = AKEqualizerManager(userDefaults: defaults, persist: true)
+        eq1.isEnabled = true
+        eq1.applyPreset(.bassBoost)
+        eq1.setGain(4.5, forBandAt: 2)
+        eq1.preampGain = 3.0
+
+        let eq2 = AKEqualizerManager(userDefaults: defaults, persist: true)
+        #expect(eq2.isEnabled == true)
+        #expect(eq2.activePreset == .custom)
+        #expect(eq2.bands[2].gain == 4.5)
+        #expect(eq2.preampGain == 3.0)
+
+        eq2.clearSavedSettings()
+        let eq3 = AKEqualizerManager(userDefaults: defaults, persist: true)
+        #expect(eq3.isEnabled == false)
+        #expect(eq3.activePreset == .flat)
+        #expect(eq3.bands[2].gain == 0.0)
+
+        defaults.removePersistentDomain(forName: suiteName)
+    }
 }
